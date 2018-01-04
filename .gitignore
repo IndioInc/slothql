@@ -1,0 +1,5 @@
+venv
+.coverage
+*.pyc
+.cache
+.idea
