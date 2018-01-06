@@ -1,0 +1,11 @@
+[run]
+omit =
+    *site-packages*
+    *__init__.py
+    *tests*
+    *conftest.py
+
+[report]
+exclude_lines =
+    def __repr__
+    assert
