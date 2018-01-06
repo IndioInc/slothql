@@ -32,9 +32,9 @@ class ObjectTypeMeta(type):
 
 class ObjectType(graphql.GraphQLObjectType, metaclass=ObjectTypeMeta):
     @classmethod
-    def __new__(cls, *args):
-        assert not cls._meta.abstract, f'Abstract type {cls.__name__} can not be initialized'
-        return super().__new__(cls, *args)
+    def __new__(cls, *more):
+        assert not cls._meta.abstract, f'Abstract type {cls.__name__} can not be created'
+        return super().__new__(*more)
 
     def __init__(self):
         super().__init__(
