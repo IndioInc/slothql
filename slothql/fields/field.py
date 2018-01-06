@@ -16,10 +16,10 @@ class Field(graphql.GraphQLField):
         )
 
     @classmethod
-    def resolve(cls, resolver, parent, info: graphql.ResolveInfo, *args, **kwargs):
+    def resolve(cls, resolver, parent, info: graphql.ResolveInfo):
         if not resolver:
             return None
-        return resolver(cls.resolve_field(parent, info.field_name), info, *args, **kwargs)
+        return resolver(cls.resolve_field(parent, info.field_name), info)
 
     def __repr__(self) -> str:
         return f'<Field: {repr(self.type)}>'

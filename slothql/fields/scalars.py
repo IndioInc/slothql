@@ -5,8 +5,8 @@ from .field import Field
 
 class ScalarField(Field):
     @classmethod
-    def resolve(cls, resolver, parent, info: graphql.ResolveInfo, *args, **kwargs):
-        return cls.serialize(parent)
+    def resolve(cls, resolver, parent, info: graphql.ResolveInfo):
+        return cls.serialize(super().resolve(resolver, parent, info))
 
     @classmethod
     def serialize(cls, value):
