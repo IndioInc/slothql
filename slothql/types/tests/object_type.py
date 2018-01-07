@@ -1,4 +1,7 @@
 import pytest
+from unittest import mock
+
+from slothql import fields
 
 from ..object_type import ObjectType
 
@@ -46,11 +49,18 @@ class TestObjectTypeInheritance:
             Inherit()
 
 
-@pytest.mark.skip(reason='not implemented yet')
-def test_can_add_fields():
-    pass
+@pytest.mark.incremental
+class TestObjectTypeFields:
+    def test_meta_has_fields(self):
+        assert isinstance(getattr(ObjectType._meta, 'fields'), dict)
+        assert not ObjectType._meta.fields
 
+    def test_can_add_fields(self):
+        class Inherit(ObjectType):
+            field = fields.Field(mock.Mock(spec=ObjectType))
+        assert Inherit.field == Inherit._meta.fields.get('field')
 
-@pytest.mark.skip(reason='not implemented yet')
-def test_attributes_are_not_fields():
-    pass
+    def test_attributes_are_not_fields(self):
+        class Inherit(ObjectType):
+            field = 'attribute'
+        assert 'field' not in Inherit._meta.fields

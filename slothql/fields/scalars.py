@@ -3,7 +3,7 @@ import graphql
 from .field import Field
 
 
-class ScalarField(Field):
+class Scalar(Field):
     @classmethod
     def resolve(cls, resolver, parent, info: graphql.ResolveInfo):
         return cls.serialize(super().resolve(resolver, parent, info))
@@ -13,7 +13,7 @@ class ScalarField(Field):
         return value
 
 
-class StringField(ScalarField):
+class String(Scalar):
     def __init__(self, **kwargs):
         super().__init__(of_type=graphql.GraphQLString)
 
