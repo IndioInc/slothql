@@ -13,10 +13,37 @@ class Scalar(Field):
         return value
 
 
+class Boolean(Scalar):
+    def __init__(self, resolver=None):
+        super().__init__(of_type=graphql.GraphQLBoolean, resolver=resolver)
+
+
+class Integer(Scalar):
+    def __init__(self, resolver=None):
+        super().__init__(of_type=graphql.GraphQLInt, resolver=resolver)
+
+
+class Float(Scalar):
+    def __init__(self, resolver=None):
+        super().__init__(of_type=graphql.GraphQLFloat, resolver=resolver)
+
+
 class String(Scalar):
     def __init__(self, resolver=None):
         super().__init__(of_type=graphql.GraphQLString, resolver=resolver)
 
-    @classmethod
-    def serialize(cls, value):
-        return str(value)
+
+class JSONString(Scalar):
+    def __init__(self, resolver=None):
+        super().__init__(of_type=graphql.GraphQLString, resolver=resolver)
+
+
+class ID(Scalar):
+    def __init__(self, resolver=None):
+        super().__init__(of_type=graphql.GraphQLID, resolver=resolver)
+
+
+# Shortcuts
+Bool = Boolean
+Int = Integer
+Str = String

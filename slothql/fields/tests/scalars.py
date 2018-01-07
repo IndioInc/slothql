@@ -3,7 +3,7 @@ from unittest import mock
 
 from graphql.type.definition import GraphQLType
 
-from ..scalars import Field, Scalar, String
+from ..scalars import Field, Scalar, JSONString, String, Integer, Bool, Float, ID
 
 
 @pytest.mark.incremental
@@ -24,16 +24,25 @@ class TestScalar:
         serialize.assert_called_once_with(obj)
 
 
-@pytest.mark.incremental
-class TestString:
-    def test_can_init(self):
-        String()
+def test_can_init_bool():
+    Bool()
 
-    @pytest.mark.parametrize("value, expected", [
-        ('123', '123'),
-        (234, '234'),
-        ({}, '{}'),
-        ({'a': [1]}, "{'a': [1]}"),
-    ])
-    def test_serialize(self, value, expected):
-        assert expected == String.serialize(value)
+
+def test_can_init_integer():
+    Integer()
+
+
+def test_can_init_float():
+    Float()
+
+
+def test_can_init_string():
+    String()
+
+
+def test_can_init_json_string():
+    JSONString()
+
+
+def test_can_init_json_id():
+    ID()
