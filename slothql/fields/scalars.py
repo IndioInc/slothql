@@ -14,8 +14,8 @@ class Scalar(Field):
 
 
 class String(Scalar):
-    def __init__(self, **kwargs):
-        super().__init__(of_type=graphql.GraphQLString)
+    def __init__(self, resolver=None):
+        super().__init__(of_type=graphql.GraphQLString, resolver=resolver)
 
     @classmethod
     def serialize(cls, value):

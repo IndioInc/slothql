@@ -6,7 +6,7 @@ from slothql.fields import Field
 from slothql.utils import is_magic_name
 
 
-class ObjectTypeOptions:
+class ObjectOptions:
     __slots__ = (
         'abstract',
         'fields',
@@ -17,8 +17,8 @@ class ObjectTypeOptions:
         self.fields = kwargs.get('fields', {})
 
 
-class ObjectTypeMeta(type):
-    meta_options_class = ObjectTypeOptions
+class ObjectMeta(type):
+    meta_options_class = ObjectOptions
 
     def __new__(mcs, name, bases, attrs: dict, **kwargs):
         cls = super().__new__(mcs, name, bases, attrs, **kwargs)
@@ -35,7 +35,7 @@ class ObjectTypeMeta(type):
         return kwargs
 
 
-class ObjectType(graphql.GraphQLObjectType, metaclass=ObjectTypeMeta):
+class Object(graphql.GraphQLObjectType, metaclass=ObjectMeta):
     @classmethod
     def __new__(cls, *more):
         assert not cls._meta.abstract, f'Abstract type {cls.__name__} can not be created'
@@ -44,7 +44,7 @@ class ObjectType(graphql.GraphQLObjectType, metaclass=ObjectTypeMeta):
     def __init__(self):
         super().__init__(
             name=self.__class__.__name__,
-            fields=(),
+            fields=self._meta.fields,
         )
 
     class Meta:
