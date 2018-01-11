@@ -5,7 +5,7 @@ from graphql import graphql
 import slothql
 
 
-# @pytest.mark.incremental
+@pytest.mark.incremental
 class TestSchema:
     @classmethod
     def setup_class(cls):
@@ -31,7 +31,7 @@ class TestSchema:
 
         class Query(slothql.Object):
             hello = slothql.String(resolver=resolve)
-        with pytest.raises(Exception):
+        with pytest.raises(KeyError):
             print(graphql(slothql.Schema(query=Query), 'query { hello }').data)
 
     @pytest.mark.parametrize("call", (
@@ -39,11 +39,15 @@ class TestSchema:
             False,
     ))
     def test_complex_schema(self, call):
-        def resolve_nested(*_):
-            return {'world': 'not hello'}
-
         class Nested(slothql.Object):
-            nested = slothql.Field(self.query_class() if call else self.query_class, resolver=resolve_nested)
+            nested = slothql.Field(self.query_class() if call else self.query_class, lambda *_: {'world': 'not hello'})
 
         query = 'query { nested { hello } }'
         assert {'nested': {'hello': 'world'}} == graphql(slothql.Schema(query=Nested), query).data
+
+    def test_nested_in_null(self):
+        class Nested(slothql.Object):
+            nested = slothql.Field(self.query_class(), resolver=lambda *_: None)
+
+        query = 'query { nested { hello } }'
+        assert {'nested': None} == graphql(slothql.Schema(query=Nested), query).data
