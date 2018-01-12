@@ -13,6 +13,11 @@ providing a really simple and flexible interface.
 * Asynchronous
 * Django support
 
+# Install
+```bash
+pip install git+https://github.com/karol-gruszczyk/slothql.git
+```
+
 ## Quick start
 ```python
 # TODO
