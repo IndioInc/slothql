@@ -1,5 +1,3 @@
-import json
-
 from graphql import Source, parse, validate, GraphQLSchema
 from graphql.error import format_error, GraphQLSyntaxError
 from graphql.execution import execute, ExecutionResult
@@ -36,18 +34,3 @@ class QueryExecutor:
         if isinstance(error, GraphQLSyntaxError):
             return format_error(error)
         return {'message': str(error)}
-
-
-def get_query_from_raw_json(data: str) -> str:
-    try:
-        json_query = json.loads(data)
-    except (ValueError, TypeError) as e:
-        raise ValueError(e.message)
-
-    if not isinstance(json_query, dict):
-        raise ValueError('The received data is not a valid JSON query.')
-
-    if 'query' not in json_query:
-        raise ValueError('"query" not in request json')
-    return json_query['query']
-

@@ -1,7 +1,7 @@
 from django.core.exceptions import ValidationError
 from django.core.handlers.wsgi import WSGIRequest
 
-from slothql.query import get_query_from_raw_json
+from slothql.utils import raw_query_from_raw_json
 
 
 def get_query_from_request(request: WSGIRequest) -> str:
@@ -15,7 +15,7 @@ def get_query_from_request(request: WSGIRequest) -> str:
         return request.body.decode()
     elif request.content_type == 'application/json':
         try:
-            return get_query_from_raw_json(request.body.decode('utf-8'))
+            return raw_query_from_raw_json(request.body.decode('utf-8'))
         except ValueError as e:
             raise ValidationError(str(e))
     elif request.content_type in ('application/x-www-form-urlencoded', 'multipart/form-data'):
