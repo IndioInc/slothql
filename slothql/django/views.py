@@ -1,5 +1,8 @@
 import json
 from collections import OrderedDict
+
+from django.template import Template
+from django.template.context import Context
 from typing import Tuple, Optional, Union, Callable
 
 from django.conf import settings
@@ -12,6 +15,7 @@ from django.http import HttpResponse, HttpResponseNotAllowed, HttpResponseBadReq
 from graphql.type.schema import GraphQLSchema
 
 from slothql import gql
+from slothql.template import get_template_string
 
 from .utils import get_query_from_request
 
@@ -36,10 +40,9 @@ class GraphQLView(View):
         result, status_code = self.get_query_result(query)
 
         if self.show_graphiql:
-            context = self.get_context_data()
-            context.update({'result': result if query else '', 'query': query})
-            return render(self.request, self.graphiql_template, context=context,
-                          status=status_code if query else 200)
+            template = Template(get_template_string(self.graphiql_template))
+            context = Context({**self.get_context_data(), **{'result': result if query else '', 'query': query}})
+            return HttpResponse(template.render(context), status=status_code if query else 200)
 
         return HttpResponse(content=result, status=status_code, content_type='application/json')
 

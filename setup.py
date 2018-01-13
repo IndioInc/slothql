@@ -12,10 +12,10 @@ setup(
     author='Karol Gruszczyk',
     author_email='karol.gruszczyk@gmail.com',
 
-    packages=find_packages(),
+    packages=find_packages(exclude=['*.tests*']),
 
     url='https://github.com/karol-gruszczyk/slothql/',
-    keywords='graphql framework django relay graphene',
+    keywords='graphql framework django async aiohttp relay graphene',
 
     license='MIT',
     classifiers=[
@@ -32,4 +32,6 @@ setup(
     install_requires=[
         'graphql-core>=2.0<3',
     ],
+    platforms='any',
+    include_package_data=True,
 )

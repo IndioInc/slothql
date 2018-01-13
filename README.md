@@ -10,8 +10,10 @@ providing a really simple and flexible interface.
 * Python 3.6+
 
 ## Features
+* Framework agnostic
 * Asynchronous
-* Django support
+* [Django]() support
+* [aiohttp]() support
 
 # Install
 ```bash
