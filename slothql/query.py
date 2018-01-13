@@ -2,6 +2,8 @@ from graphql import Source, parse, validate, GraphQLSchema
 from graphql.error import format_error, GraphQLSyntaxError
 from graphql.execution import execute, ExecutionResult
 
+import slothql
+
 
 class QueryExecutor:
     def __init__(self, schema: GraphQLSchema) -> None:
@@ -34,3 +36,7 @@ class QueryExecutor:
         if isinstance(error, GraphQLSyntaxError):
             return format_error(error)
         return {'message': str(error)}
+
+
+def gql(schema: slothql.Schema, query: str) -> dict:
+    return QueryExecutor(schema).query(query)

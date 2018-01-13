@@ -11,7 +11,7 @@ from django.http import HttpResponse, HttpResponseNotAllowed, HttpResponseBadReq
 
 from graphql.type.schema import GraphQLSchema
 
-from slothql.query import QueryExecutor
+from slothql import gql
 
 from .utils import get_query_from_request
 
@@ -47,7 +47,7 @@ class GraphQLView(View):
         return get_query_from_request(self.request)
 
     def execute_query(self, query: str) -> dict:
-        return QueryExecutor(self.get_schema()).query(query)
+        return gql(self.get_schema(), query)
 
     def get_query_result(self, query: str) -> Tuple[Optional[str], int]:
         result = self.execute_query(query)

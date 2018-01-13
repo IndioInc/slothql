@@ -1,8 +1,14 @@
 import pytest
 from unittest import mock
 
+from django.conf import settings
+
 import graphql
 from graphql.type.definition import GraphQLType
+
+
+def pytest_configure():
+    settings.configure()
 
 
 # setup for @pytest.mark.incremental

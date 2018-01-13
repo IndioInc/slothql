@@ -24,16 +24,6 @@ class TestSchema:
         query = 'query { hello }'
         assert 'world' == graphql(schema, query).data['hello']
 
-    @pytest.mark.skip(reason='needs additional development')
-    def test_exception_not_handled(self):
-        def resolve(*_):
-            raise KeyError
-
-        class Query(slothql.Object):
-            hello = slothql.String(resolver=resolve)
-        with pytest.raises(KeyError):
-            print(graphql(slothql.Schema(query=Query), 'query { hello }').data)
-
     @pytest.mark.parametrize("call", (
             True,
             False,
