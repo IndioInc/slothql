@@ -3,7 +3,7 @@ from unittest import mock
 
 from slothql import fields
 
-from ..object_type import Object, ObjectOptions
+from ..object import Object, ObjectOptions
 
 
 def test_cannot_init():
@@ -21,6 +21,14 @@ class TestObjectMeta:
 
     def test_object_class(self):
         assert isinstance(Object._meta, ObjectOptions)
+
+
+def test_cannot_add_extra_meta_attributes():
+    with pytest.raises(AttributeError) as exc_info:
+        class Inherit(Object):
+            class Meta:
+                foo = True
+    assert 'object has no attribute' in str(exc_info.value)
 
 
 @pytest.mark.incremental

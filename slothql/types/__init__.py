@@ -1,1 +1,1 @@
-from .object_type import Object
+from .object import Object

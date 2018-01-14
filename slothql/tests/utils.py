@@ -24,16 +24,26 @@ def test_merge_object_dicts():
         field_a = 'a'
         field_a_b = 'a'
 
+        def method(self):
+            pass
+
+        @property
+        def prop(self):
+            return
+
     class B(A):
         field_a_b = 'b'
         field_b = 'b'
 
-    assert utils.get_object_attributes(B) == {'field_a': 'a', 'field_a_b': 'b', 'field_b': 'b'}
+    assert utils.get_object_attributes(B) == {
+        'field_a': 'a', 'field_a_b': 'b', 'field_b': 'b',
+        'method': A.method, 'prop': A.prop,
+    }
 
 
 @pytest.mark.parametrize('query', (
-    'abc', b'abc',
-    "{'query': 'elo'}",
+        'abc', b'abc',
+        "{'query': 'elo'}",
 ))
 def test_raw_query_invalid_json(query):
     with pytest.raises(ValueError) as exc_info:
@@ -42,11 +52,11 @@ def test_raw_query_invalid_json(query):
 
 
 @pytest.mark.parametrize('query', (
-    '123',
-    '[]',
-    '"abc"',
-    'NaN', '-Infinity', 'null',
-    'true', 'false',
+        '123',
+        '[]',
+        '"abc"',
+        'NaN', '-Infinity', 'null',
+        'true', 'false',
 ))
 def test_raw_query__valid_json_invalid_type(query):
     with pytest.raises(ValueError) as exc_info:
