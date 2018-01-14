@@ -6,10 +6,8 @@ from slothql.types.object import Object, ObjectMeta, ObjectOptions
 class ModelOptions(ObjectOptions):
     __slots__ = ('model',)
 
-    def __init__(self, base_options: Iterable['ObjectOptions'], **kwargs):
-        super().__init__(base_options, **kwargs)
-        if not hasattr(self, 'model'):
-            self.model = None
+    def __init__(self, base_attrs: Iterable['ObjectOptions'], **kwargs):
+        super().__init__(base_attrs, **kwargs)
         assert self.abstract or self.model, f'"model" is required for object ModelOptions'
 
 

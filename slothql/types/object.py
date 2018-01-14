@@ -14,15 +14,14 @@ class ObjectOptions:
     )
 
     def set_defaults(self):
-        for name in (n for n in dir(self.__class__) if not is_magic_name(n)):
-            attr = getattr(self.__class__, name)
-            if not inspect.isfunction(attr) and not inspect.ismethod(attr):
+        for name in (n for n in dir(self) if not is_magic_name(n)):
+            if not hasattr(self, name):
                 setattr(self, name, None)
 
-    def __init__(self, base_options: Iterable['ObjectOptions'], **kwargs):
+    def __init__(self, base_attrs: Iterable['ObjectOptions'], attrs):
         self.set_defaults()
-        kwargs.update(abstract=kwargs.get('abstract', False))
-        attributes = self.merge_attributes(*reversed([get_object_attributes(base) for base in base_options]), kwargs)
+        attrs.update(abstract=attrs.get('abstract', False))
+        attributes = self.merge_attributes(*base_attrs, attrs)
         self.fields = attributes.pop('fields', {})
         for name, value in attributes.items():
             setattr(self, name, value)
@@ -32,8 +31,6 @@ class ObjectOptions:
         result = {}
         for obj_dict in obj_dicts:
             for name, value in obj_dict.items():
-                if inspect.ismethod(value):
-                    continue
                 if isinstance(value, dict):
                     result[name] = {**result.get(name, {}), **value}
                 else:
@@ -47,12 +44,18 @@ class ObjectMeta(type):
     def __new__(mcs, name, bases, attrs: dict, options_class: Type[ObjectOptions] = ObjectOptions, **kwargs):
         cls = super().__new__(mcs, name, bases, attrs)
         assert 'Meta' not in attrs or inspect.isclass(attrs['Meta']), 'attribute Meta has to be a class'
-        cls._meta = options_class(base_options=mcs.get_options_bases(bases), **mcs.get_options_kwargs(attrs))
+        cls._meta = options_class(base_attrs=mcs.get_options_bases(bases), attrs=mcs.get_options_kwargs(attrs))
         return cls
 
     @classmethod
     def get_options_bases(mcs, bases: Tuple[type]) -> Iterable[ObjectOptions]:
-        yield from (base._meta for base in bases if hasattr(base, '_meta') and isinstance(base._meta, ObjectOptions))
+        yield from (
+            {
+                k: v for k, v in get_object_attributes(base._meta).items()
+                if not inspect.ismethod(v) and not inspect.isfunction(v)
+            }
+            for base in reversed(bases) if hasattr(base, '_meta') and isinstance(base._meta, ObjectOptions)
+        )
 
     @classmethod
     def get_options_kwargs(mcs, attrs: dict) -> dict:
