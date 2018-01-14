@@ -9,7 +9,7 @@ def get_object_attributes(obj) -> dict:
     return {name: getattr(obj, name) for name in dir(obj) if not is_magic_name(name)}
 
 
-def raw_query_from_raw_json(data: str) -> str:
+def query_from_raw_json(data: str) -> str:
     try:
         json_query = json.loads(data)
     except json.JSONDecodeError as e:

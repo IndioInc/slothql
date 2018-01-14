@@ -3,6 +3,7 @@ import os
 import pytest
 from unittest import mock
 
+from slothql.exceptions import TemplateNotFound
 from .. import template
 
 
@@ -20,6 +21,11 @@ def test_resolve_path(template_file):
         with mock.patch('slothql.config.TEMPLATE_DIRS', [os.path.basename(template_dir)]):
             path = template.resolve_path('file.html')
     assert path == f'{base_dir}/{os.path.basename(template_dir)}/file.html' and os.path.exists(path)
+
+
+def test_resolve_path__not_found():
+    with pytest.raises(TemplateNotFound):
+        template.resolve_path('file.html')
 
 
 def test_get_template_string(template_file):
