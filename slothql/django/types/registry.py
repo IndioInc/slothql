@@ -1,3 +1,4 @@
+import inspect
 from typing import Type
 
 from django.db import models
@@ -10,6 +11,8 @@ class TypeRegistry(metaclass=Singleton):
     _type_mapping = {}
 
     def register(self, django_field: Type[models.Field], field: slothql.Field):
+        assert inspect.isclass(django_field) and issubclass(django_field, models.Field)
+        assert isinstance(field, slothql.Field)
         self._type_mapping[django_field] = field
 
     def unregister(self, django_field: Type[models.Field]):
@@ -20,5 +23,5 @@ class TypeRegistry(metaclass=Singleton):
 
     def get(self, django_field: models.Field):
         if type(django_field) not in self._type_mapping:
-            raise NotImplementedError(f'{type(django_field)} field conversion is not implemented')
+            raise NotImplementedError(f'{django_field} field conversion is not implemented')
         return self._type_mapping[type(django_field)]
