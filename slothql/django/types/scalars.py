@@ -1,5 +1,9 @@
+from django.db import models
+
 import slothql
 
+from .registry import TypeRegistry
 
-class TextField(slothql.String):
-    pass
+
+TypeRegistry().register(models.CharField, slothql.String())
+TypeRegistry().register(models.TextField, slothql.String())
