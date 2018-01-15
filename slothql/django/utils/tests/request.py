@@ -7,7 +7,7 @@ from unittest import mock
 from django.core.exceptions import ValidationError
 from django.test import RequestFactory
 
-from ..utils import get_query_from_request
+from ..request import get_query_from_request
 
 query = 'query { hello }'
 rf = RequestFactory()

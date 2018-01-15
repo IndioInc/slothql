@@ -8,7 +8,6 @@ from typing import Tuple, Optional, Union, Callable
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.handlers.wsgi import WSGIRequest
-from django.shortcuts import render
 from django.views import View
 from django.http import HttpResponse, HttpResponseNotAllowed, HttpResponseBadRequest
 
@@ -17,7 +16,7 @@ from graphql.type.schema import GraphQLSchema
 from slothql import gql
 from slothql.template import get_template_string
 
-from .utils import get_query_from_request
+from .utils.request import get_query_from_request
 
 
 class GraphQLView(View):

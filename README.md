@@ -12,8 +12,8 @@ providing a really simple and flexible interface.
 ## Features
 * Framework agnostic
 * Asynchronous
-* [Django]() support
-* [aiohttp]() support
+* [Django](https://www.djangoproject.com/) support
+* ~~[aiohttp](https://aiohttp.readthedocs.io/en/stable/) support~~
 
 # Install
 ```bash
