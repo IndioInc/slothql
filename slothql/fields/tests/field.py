@@ -20,6 +20,10 @@ class TestField:
         field = Field(of_type=type())
         assert field.resolver(None, info()) is None
 
+    def test_default_resolver(self, type, info):
+        field = Field(of_type=type())
+        assert 'bar' == field.resolver({'foo': 'bar'}, info(field_name='foo'))
+
     def test_resolver_resolution(self, resolver):
         field = Field(of_type=mock.Mock(spec=GraphQLType), resolver=resolver)
         with mock.patch.object(Field, 'resolve_field') as resolve_field:

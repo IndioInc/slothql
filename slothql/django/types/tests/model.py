@@ -36,6 +36,7 @@ def test_model__model_not_registered():
 
     class Example(Model):
         class Meta:
+            abstract = True
             model = NotRegistered
 
 
@@ -47,6 +48,7 @@ def test_model__abstract_model():
 
     class Example(Model):
         class Meta:
+            abstract = True
             model = Abstract
 
 

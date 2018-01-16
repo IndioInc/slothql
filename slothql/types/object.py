@@ -57,6 +57,8 @@ class ObjectMeta(type):
             meta_attrs=get_attr_fields(attrs['Meta']) if 'Meta' in attrs else {},
             obj_attrs=attrs,
         )
+        assert cls._meta.abstract or cls._meta.fields, \
+            f'"{name}" has to provide some fields, or use "class Meta: abstract = True"'
         return cls
 
     @classmethod
@@ -70,7 +72,7 @@ class ObjectMeta(type):
 class Object(graphql.GraphQLObjectType, metaclass=ObjectMeta):
     @classmethod
     def __new__(cls, *more):
-        assert not cls._meta.abstract, f'Abstract type {cls.__name__} can not be created'
+        assert not cls._meta.abstract, f'Abstract type {cls.__name__} can not be instantiated'
         return super().__new__(*more)
 
     def __init__(self):

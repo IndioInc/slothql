@@ -4,6 +4,8 @@ from unittest import mock
 import graphql
 from graphql.type.definition import GraphQLType
 
+import slothql
+
 
 # setup for @pytest.mark.incremental
 
@@ -34,3 +36,8 @@ def info():
 @pytest.fixture()
 def resolver():
     return mock.Mock(side_effect=lambda o, *_: o)
+
+
+@pytest.fixture()
+def field_mock(type):
+    return mock.Mock(spec=slothql.Field)
