@@ -29,7 +29,7 @@ def test_cannot_add_extra_meta_attributes():
         class Inherit(Object):
             class Meta:
                 foo = True
-    assert 'object has no attribute' in str(exc_info.value)
+    assert 'Meta received an unexpected attribute "foo = True"' == str(exc_info.value)
 
 
 @pytest.mark.incremental

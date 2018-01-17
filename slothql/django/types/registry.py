@@ -8,6 +8,13 @@ from slothql.utils.singleton import Singleton
 
 
 class TypeRegistry(metaclass=Singleton):
+    RELATION_TYPES = (
+        models.ManyToManyField,
+        models.ForeignKey,
+        models.ManyToOneRel,
+        models.OneToOneField,
+        models.OneToOneRel,
+    )
     _type_mapping = {}
 
     def register(self, django_field: Type[models.Field], field: slothql.Field):
@@ -23,5 +30,5 @@ class TypeRegistry(metaclass=Singleton):
 
     def get(self, django_field: models.Field):
         if type(django_field) not in self._type_mapping:
-            raise NotImplementedError(f'{django_field} field conversion is not implemented')
+            raise NotImplementedError(f'{repr(django_field)} field conversion is not implemented')
         return self._type_mapping[type(django_field)]

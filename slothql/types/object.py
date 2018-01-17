@@ -23,7 +23,10 @@ class ObjectOptions:
             {**meta_attrs, **{'abstract': meta_attrs.get('abstract', False)}}
         )
         for name, value in attrs.items():
-            setattr(self, name, value)
+            try:
+                setattr(self, name, value)
+            except AttributeError:
+                raise AttributeError(f'Meta received an unexpected attribute "{name} = {value}"')
         self.fields = self.get_fields(meta_attrs, obj_attrs)
 
     @classmethod
