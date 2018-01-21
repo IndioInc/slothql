@@ -5,6 +5,7 @@ import graphql
 
 from slothql.fields import Field
 from slothql.utils import is_magic_name, get_attr_fields
+from slothql.utils.singleton import Singleton
 
 
 class ObjectOptions:
@@ -49,7 +50,7 @@ class ObjectOptions:
         }}
 
 
-class ObjectMeta(type):
+class ObjectMeta(Singleton):
     __slots__ = ()
 
     def __new__(mcs, name, bases, attrs: dict, options_class: Type[ObjectOptions] = ObjectOptions, **kwargs):

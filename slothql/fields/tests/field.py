@@ -31,6 +31,7 @@ class TestField:
         ({'a': 1, 'b': 2}, {'a': 1, 'b': 2, 'c': None}),
         (collections.namedtuple('A', ('a', 'b'))(1, 2), {'a': 1, 'b': 2, 'c': None}),
         (None, {'a': None}),
+        ({'a': {'nested': 'hell yeah'}}, {'a': {'nested': 'hell yeah'}}),
 ))
 def test_resolve_field(obj, expected, info):
     for field_name, expected_value in expected.items():

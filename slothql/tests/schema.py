@@ -11,6 +11,7 @@ class TestSchema:
     def setup_class(cls):
         class Query(slothql.Object):
             hello = slothql.String(resolver=lambda *_: 'world')
+
         cls.query_class = Query
 
     def test_can_init(self):

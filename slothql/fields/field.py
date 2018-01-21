@@ -53,8 +53,9 @@ class Field(graphql.GraphQLField):
     def resolve_field(cls, obj, info: graphql.ResolveInfo):
         if obj is None:
             return None
+        name = info.field_name
         if isinstance(obj, dict):
-            value = obj.get(info.field_name)
+            value = obj.get(name)
         else:
-            value = getattr(obj, info.field_name, None)
+            value = getattr(obj, name, None)
         return value() if callable(value) else value
