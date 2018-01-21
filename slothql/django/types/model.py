@@ -32,11 +32,14 @@ class ModelOptions(ObjectOptions):
     @classmethod
     def resolve_attr_list(cls, model: Type[models.Model], fields: Iterable[str]) -> dict:
         attrs = {}
-        for name, attr in get_model_attrs(model).items():
+        model_attrs = get_model_attrs(model)
+        for name in fields:
+            assert name in model_attrs, f'"{name}" is not a valid field for model "{model.__name__}"'
+        for name, attr in model_attrs.items():
             if name not in fields:
                 continue
             assert not isinstance(attr, TypeRegistry.RELATION_TYPES), \
-                f'Related field {name} = {repr(attr)} has to be declared explicitly, to avoid type collision'
+                f'"{name}" has to be declared explicitly, to avoid type collisions'
             attrs[name] = attr
         return attrs
 
