@@ -142,7 +142,7 @@ def test_no_fields_abstract():
 
 def test_resolver_lambda(info):
     class Test(Object):
-        field = slothql.String(resolver=lambda obj, info: obj)
+        field = slothql.String(resolver=lambda obj: obj)
 
     expected = object()
     assert expected == Test.field.resolver(expected, info(field_name='field'))
@@ -151,7 +151,7 @@ def test_resolver_lambda(info):
 def test_resolver_staticmethod(info):
     class Test(Object):
         @staticmethod
-        def get_field(obj, info):
+        def get_field(obj):
             return obj
 
         field = slothql.String(resolver=get_field)
@@ -163,7 +163,7 @@ def test_resolver_staticmethod(info):
 def test_resolver_classmethod(info):
     class Test(Object):
         @classmethod
-        def get_field(cls, obj, info):
+        def get_field(cls, obj):
             return obj
 
         field = slothql.String(resolver=get_field)
@@ -174,7 +174,7 @@ def test_resolver_classmethod(info):
 
 def test_resolver_method(info):
     class Test(Object):
-        def get_field(self, obj, info):
+        def get_field(self, obj):
             return obj
 
         field = slothql.String(resolver=get_field)

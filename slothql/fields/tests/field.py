@@ -4,7 +4,6 @@ from functools import partial
 import pytest
 from unittest import mock
 
-import graphql
 from graphql.type.definition import GraphQLType
 
 from ..field import Field

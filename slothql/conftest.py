@@ -42,7 +42,7 @@ def info():
 
 
 @pytest.fixture()
-def resolver():
+def resolver_mock():
     return mock.Mock(side_effect=lambda o, *_: o)
 
 

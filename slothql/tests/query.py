@@ -8,4 +8,4 @@ def test_q():
         hello = slothql.String(resolver=lambda *_: 'world')
 
     result = gql(slothql.Schema(query=Query), 'query { hello }')
-    assert result == {'data': {'hello': 'world'}}
+    assert {'data': {'hello': 'world'}} == result
