@@ -32,6 +32,19 @@ def test_duplicate_references():
     slothql.Schema(query=Query)
 
 
+@pytest.mark.parametrize('resolver, expected', (
+        (lambda obj, info: [1, 2, 3], [1, 2, 3]),
+        (None, None),
+))
+def test_list_field(resolver, expected):
+    class Query(slothql.Object):
+        list = slothql.Integer(resolver=resolver, many=True)
+
+    schema = slothql.Schema(query=Query)
+
+    assert {'data': {'list': expected}} == slothql.gql(schema, 'query { list }')
+
+
 @pytest.mark.xfail
 def test_q__exception_not_handled():
     def resolver(*_):

@@ -1,5 +1,6 @@
 import inspect
 from functools import partial
+from typing import Union, Type
 
 import graphql
 from graphql.type.definition import GraphQLType
@@ -25,20 +26,16 @@ class Field(graphql.GraphQLField):
     def default_resolver(self):
         return self.resolve_field
 
-    def __init__(self, of_type, resolver=None, args=None, deprecation_reason=None, description=None):
+    def __init__(self, of_type: Union[GraphQLType, Type[GraphQLType]], resolver=None, **kwargs):
         of_type = of_type() if inspect.isclass(of_type) else of_type
         assert isinstance(of_type, GraphQLType), f'"of_type" needs to be a valid GraphQlType'
+        if kwargs.pop('many', False):
+            of_type = graphql.GraphQLList(of_type)
 
         resolver = self.get_resolver(resolver)
         assert callable(resolver), f'resolver needs to be callable, not {resolver}'
 
-        super().__init__(
-            type=of_type,
-            args=args,
-            resolver=partial(self.resolve, resolver),
-            deprecation_reason=deprecation_reason,
-            description=description,
-        )
+        super().__init__(type=of_type, resolver=partial(self.resolve, resolver), **kwargs, )
 
     @classmethod
     def resolve(cls, resolver, obj, info: graphql.ResolveInfo):

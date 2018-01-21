@@ -80,10 +80,11 @@ class Object(graphql.GraphQLObjectType, metaclass=ObjectMeta):
         assert not cls._meta.abstract, f'Abstract type {cls.__name__} can not be instantiated'
         return super().__new__(*more)
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         super().__init__(
             name=self.__class__.__name__,
             fields=self._meta.fields,
+            **kwargs,
         )
 
     class Meta:

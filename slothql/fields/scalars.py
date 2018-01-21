@@ -14,30 +14,30 @@ class Scalar(Field):
 
 
 class Boolean(Scalar):
-    def __init__(self, resolver=None):
-        super().__init__(of_type=graphql.GraphQLBoolean, resolver=resolver)
+    def __init__(self, **kwargs):
+        super().__init__(of_type=graphql.GraphQLBoolean, **kwargs)
 
 
 class Integer(Scalar):
-    def __init__(self, resolver=None):
-        super().__init__(of_type=graphql.GraphQLInt, resolver=resolver)
+    def __init__(self, **kwargs):
+        super().__init__(of_type=graphql.GraphQLInt, **kwargs)
 
 
 class Float(Scalar):
-    def __init__(self, resolver=None):
-        super().__init__(of_type=graphql.GraphQLFloat, resolver=resolver)
+    def __init__(self, **kwargs):
+        super().__init__(of_type=graphql.GraphQLFloat, **kwargs)
 
 
 class String(Scalar):
-    def __init__(self, resolver=None):
-        super().__init__(of_type=graphql.GraphQLString, resolver=resolver)
+    def __init__(self, **kwargs):
+        super().__init__(of_type=graphql.GraphQLString, **kwargs)
 
 
 class JSONString(Scalar):
-    def __init__(self, resolver=None):
-        super().__init__(of_type=graphql.GraphQLString, resolver=resolver)
+    def __init__(self, **kwargs):
+        super().__init__(of_type=graphql.GraphQLString, **kwargs)
 
 
 class ID(Scalar):
-    def __init__(self, resolver=None):
-        super().__init__(of_type=graphql.GraphQLID, resolver=resolver)
+    def __init__(self, **kwargs):
+        super().__init__(of_type=graphql.GraphQLID, **kwargs)

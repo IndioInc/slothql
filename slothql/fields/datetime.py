@@ -6,8 +6,8 @@ from .scalars import String
 
 
 class DateTime(String):
-    def __init__(self, resolver=None):
-        super().__init__(resolver)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.description = 'ISO-8601 formatted datetime string'
 
     @classmethod
@@ -17,8 +17,8 @@ class DateTime(String):
 
 
 class Date(String):
-    def __init__(self, resolver=None):
-        super().__init__(resolver)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.description = 'ISO-8601 formatted date string'
 
     @classmethod
@@ -31,8 +31,8 @@ class Date(String):
 
 
 class Time(String):
-    def __init__(self, resolver=None):
-        super().__init__(resolver)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.description = 'ISO-8601 formatted time string'
 
     @classmethod
