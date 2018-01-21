@@ -53,15 +53,16 @@ class ObjectMeta(type):
     __slots__ = ()
 
     def __new__(mcs, name, bases, attrs: dict, options_class: Type[ObjectOptions] = ObjectOptions, **kwargs):
-        cls = super().__new__(mcs, name, bases, attrs)
         assert 'Meta' not in attrs or inspect.isclass(attrs['Meta']), 'attribute Meta has to be a class'
-        cls._meta = options_class(
+        meta = options_class(
             base_attrs=mcs.get_options_bases(bases),
             meta_attrs=get_attr_fields(attrs['Meta']) if 'Meta' in attrs else {},
             obj_attrs=attrs,
         )
-        assert cls._meta.abstract or cls._meta.fields, \
+        cls = super().__new__(mcs, name, bases, attrs)
+        assert meta.abstract or meta.fields, \
             f'"{name}" has to provide some fields, or use "class Meta: abstract = True"'
+        cls._meta = meta
         return cls
 
     @classmethod

@@ -5,7 +5,6 @@ from django.template import Template
 from django.template.context import Context
 from typing import Tuple, Optional, Union, Callable
 
-from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.handlers.wsgi import WSGIRequest
 from django.views import View
@@ -20,6 +19,7 @@ from .utils.request import get_query_from_request
 
 
 class GraphQLView(View):
+    DEBUG = True
     allowed_methods = ('GET', 'POST')
 
     graphiql_version: str = '0.11.10'
@@ -57,16 +57,16 @@ class GraphQLView(View):
 
     @classmethod
     def jsonify(cls, data: dict) -> str:
-        if settings.DEBUG:
+        if cls.DEBUG:
             return json.dumps(data, sort_keys=True, indent=2, separators=(',', ': '))
         return json.dumps(data, separators=(',', ':'))
 
     def get_schema(self):
-        return self.schema(self.request) if callable(self.schema) else self.schema
+        return self.DEBUG and self.schema(self.request) if callable(self.schema) else self.schema
 
     @property
     def show_graphiql(self) -> bool:
-        return settings.DEBUG and self.request.content_type in ('text/plain', 'text/html')
+        return self.request.content_type in ('text/plain', 'text/html')
 
     def get_context_data(self) -> OrderedDict:
         return OrderedDict({

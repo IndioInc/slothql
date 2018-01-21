@@ -41,9 +41,3 @@ class JSONString(Scalar):
 class ID(Scalar):
     def __init__(self, resolver=None):
         super().__init__(of_type=graphql.GraphQLID, resolver=resolver)
-
-
-# Shortcuts
-Bool = Boolean
-Int = Integer
-Str = String

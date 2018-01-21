@@ -3,7 +3,7 @@ from unittest import mock
 
 from graphql.type.definition import GraphQLType
 
-from ..scalars import Field, Scalar, JSONString, String, Integer, Bool, Float, ID
+from ..scalars import Field, Scalar, JSONString, String, Integer, Boolean, Float, ID
 
 
 @pytest.mark.incremental
@@ -25,7 +25,7 @@ class TestScalar:
 
 
 def test_can_init_bool():
-    Bool()
+    Boolean()
 
 
 def test_can_init_integer():

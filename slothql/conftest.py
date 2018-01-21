@@ -1,10 +1,18 @@
 import pytest
 from unittest import mock
 
+import django
+from django.conf import settings
+
 import graphql
 from graphql.type.definition import GraphQLType
 
 import slothql
+
+
+def pytest_configure():
+    settings.configure()
+    django.setup()
 
 
 # setup for @pytest.mark.incremental
@@ -41,3 +49,8 @@ def resolver():
 @pytest.fixture()
 def field_mock(type):
     return mock.Mock(spec=slothql.Field)
+
+
+@pytest.fixture()
+def partials_equal():
+    return lambda p1, p2: p1.func == p2.func and p1.args == p2.args and p1.keywords == p2.keywords
