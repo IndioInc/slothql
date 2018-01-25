@@ -22,8 +22,9 @@ class TestField:
         assert field.resolver(None, info()) is None
 
     def test_default_resolver(self, partials_equal):
-        field = Field(of_type=mock.Mock(spec=GraphQLType))
-        assert partials_equal(partial(field.resolve, field.default_resolver), field.resolver)
+        of_type= mock.Mock(spec=GraphQLType)
+        field = Field(of_type=of_type)
+        assert partials_equal(partial(field.resolve, field.get_default_resolver(of_type)), field.resolver)
 
 
 @pytest.mark.parametrize("obj, expected", (

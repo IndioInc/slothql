@@ -75,3 +75,7 @@ class ModelMeta(ObjectMeta):
 class Model(Object, metaclass=ModelMeta):
     class Meta:
         abstract = True
+
+    @classmethod
+    def resolve(cls, obj, info):
+        return obj.get_queryset() if isinstance(obj, models.Manager) else obj

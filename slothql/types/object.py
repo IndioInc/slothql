@@ -9,7 +9,7 @@ from slothql.utils.singleton import Singleton
 
 
 class ObjectOptions:
-    __slots__ = ('abstract', 'fields')
+    __slots__ = 'abstract', 'fields'
 
     def set_defaults(self):
         for name in (n for n in dir(self) if not is_magic_name(n)):
@@ -54,7 +54,7 @@ class ObjectMeta(Singleton):
         result = {}
         for option_set in options:
             for name, value in option_set.items():
-                result[name] = mcs.merge_field(name, result.get(name), value)
+                result[name] = mcs.merge_field(result.get(name), value)
         return result
 
     @classmethod
@@ -65,7 +65,7 @@ class ObjectMeta(Singleton):
         )
 
     @classmethod
-    def merge_field(mcs, name, old, new):
+    def merge_field(mcs, old, new):
         if isinstance(new, dict):
             return {**(old or {}), **new}
         return new
@@ -82,3 +82,7 @@ class Object(graphql.GraphQLObjectType, metaclass=ObjectMeta):
 
     class Meta:
         abstract = True
+
+    @classmethod
+    def resolve(cls, obj, info):
+        return obj
