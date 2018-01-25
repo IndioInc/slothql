@@ -78,4 +78,6 @@ class Model(Object, metaclass=ModelMeta):
 
     @classmethod
     def resolve(cls, obj, info):
+        if obj is None:
+            return cls._meta.model._default_manager.get_queryset()
         return obj.get_queryset() if isinstance(obj, models.Manager) else obj
