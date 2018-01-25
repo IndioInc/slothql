@@ -1,5 +1,5 @@
 import inspect
-from typing import Tuple, Type, Iterable, Dict
+from typing import Tuple, Type, Iterable
 
 import graphql
 
@@ -17,37 +17,13 @@ class ObjectOptions:
                 setattr(self, name, None)
         self.fields = {}
 
-    def __init__(self, base_attrs: Iterable[dict], meta_attrs: dict, obj_attrs: dict):
+    def __init__(self, attrs: dict):
         self.set_defaults()
-        attrs = self.merge_attributes(
-            *base_attrs,
-            {**meta_attrs, **{'abstract': meta_attrs.get('abstract', False)}}
-        )
         for name, value in attrs.items():
             try:
                 setattr(self, name, value)
             except AttributeError:
                 raise AttributeError(f'Meta received an unexpected attribute "{name} = {value}"')
-        self.fields = self.get_fields(meta_attrs, obj_attrs)
-
-    @classmethod
-    def overwrite_field(cls, name: str, base, field):
-        if isinstance(field, dict):
-            return {**(base or {}), **field}
-        return field
-
-    @classmethod
-    def merge_attributes(cls, *obj_dicts: dict):
-        result = {}
-        for obj_dict in obj_dicts:
-            for name, value in obj_dict.items():
-                result[name] = cls.overwrite_field(name, result.get(name), value)
-        return result
-
-    def get_fields(self, meta_attrs: dict, attrs: dict) -> Dict[str, Field]:
-        return {**self.fields, **{
-            name: field for name, field in attrs.items() if isinstance(field, Field)
-        }}
 
 
 class ObjectMeta(Singleton):
@@ -55,23 +31,44 @@ class ObjectMeta(Singleton):
 
     def __new__(mcs, name, bases, attrs: dict, options_class: Type[ObjectOptions] = ObjectOptions, **kwargs):
         assert 'Meta' not in attrs or inspect.isclass(attrs['Meta']), 'attribute Meta has to be a class'
-        meta = options_class(
-            base_attrs=mcs.get_options_bases(bases),
-            meta_attrs=get_attr_fields(attrs['Meta']) if 'Meta' in attrs else {},
-            obj_attrs=attrs,
-        )
+        meta_attrs = get_attr_fields(attrs['Meta']) if 'Meta' in attrs else {}
+        base_option = mcs.merge_options(*mcs.get_options_bases(bases))
+        meta = options_class(mcs.merge_options(base_option, mcs.get_option_attrs(base_option, attrs, meta_attrs)))
         cls = super().__new__(mcs, name, bases, attrs)
+
         assert meta.abstract or meta.fields, \
             f'"{name}" has to provide some fields, or use "class Meta: abstract = True"'
         cls._meta = meta
         return cls
 
     @classmethod
-    def get_options_bases(mcs, bases: Tuple[type]) -> Iterable[dict]:
+    def get_option_attrs(mcs, base_attrs: dict, attrs: dict, meta_attrs: dict) -> dict:
+        abstract = meta_attrs.pop('abstract', False)
+        return {**meta_attrs, **{
+            'fields': {name: field for name, field in attrs.items() if isinstance(field, Field)},
+            'abstract': abstract,
+        }}
+
+    @classmethod
+    def merge_options(mcs, *options: dict):
+        result = {}
+        for option_set in options:
+            for name, value in option_set.items():
+                result[name] = mcs.merge_field(name, result.get(name), value)
+        return result
+
+    @classmethod
+    def get_options_bases(mcs, bases: Tuple[Type['Object']]) -> Iterable[dict]:
         yield from (
             get_attr_fields(base._meta)
             for base in reversed(bases) if hasattr(base, '_meta') and isinstance(base._meta, ObjectOptions)
         )
+
+    @classmethod
+    def merge_field(mcs, name, old, new):
+        if isinstance(new, dict):
+            return {**(old or {}), **new}
+        return new
 
 
 class Object(graphql.GraphQLObjectType, metaclass=ObjectMeta):
@@ -81,11 +78,7 @@ class Object(graphql.GraphQLObjectType, metaclass=ObjectMeta):
         return super().__new__(*more)
 
     def __init__(self, **kwargs):
-        super().__init__(
-            name=self.__class__.__name__,
-            fields=self._meta.fields,
-            **kwargs,
-        )
+        super().__init__(name=self.__class__.__name__, fields=self._meta.fields, **kwargs)
 
     class Meta:
         abstract = True

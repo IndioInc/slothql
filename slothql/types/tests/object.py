@@ -4,7 +4,7 @@ from unittest import mock
 import slothql
 from slothql import fields
 
-from ..object import Object, ObjectOptions
+from ..object import Object, ObjectMeta, ObjectOptions
 
 
 def test_cannot_init():
@@ -28,6 +28,7 @@ def test_cannot_add_extra_meta_attributes():
     with pytest.raises(AttributeError) as exc_info:
         class Inherit(Object):
             class Meta:
+                abstract = True
                 foo = True
     assert 'Meta received an unexpected attribute "foo = True"' == str(exc_info.value)
 
@@ -96,7 +97,7 @@ class TestObjectFields:
 
 
 def test_merge_object_options_dicts():
-    assert ObjectOptions.merge_attributes(
+    assert ObjectMeta.merge_options(
         {'fields': {'a': 1, 'a_b': 1}},
         {'fields': {'a_b': 2, 'b': 2, 'extra_b': 2}},
     ) == {'fields': {'a': 1, 'a_b': 2, 'b': 2, 'extra_b': 2}}
