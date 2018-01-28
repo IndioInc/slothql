@@ -1,12 +1,9 @@
-import pytest
-
 import slothql
 
 
-@pytest.mark.skip(reason='not implemented yet')
 def test_circular_dependency():
     class A(slothql.Object):
-        b = slothql.Field('B')
+        b = slothql.Field(lambda: B)
         field = slothql.String()
 
     class B(slothql.Object):
@@ -22,14 +19,9 @@ def test_circular_dependency():
     assert {'data': {'root': {'b': {'a': {'field': 'foo'}}}}} == slothql.gql(schema, query)
 
 
-@pytest.mark.skip(reason='not implemented yet')
-@pytest.mark.parametrize('other', (
-        ('A',),
-        ('self',),
-))
-def test_self_dependency(other):
+def test_self_dependency():
     class A(slothql.Object):
-        a = slothql.Field(other)
+        a = slothql.Field(lambda: A)
         field = slothql.String()
 
     class Query(slothql.Object):

@@ -1,15 +1,17 @@
 import inspect
 import functools
-from typing import Union, Type
+from typing import Union, Type, Callable
 
 import graphql
 from graphql.type.definition import GraphQLType
+
+from slothql.utils import LazyInitMixin
 
 from .list import ListMixin
 from .resolver import Resolver
 
 
-class Field(ListMixin, graphql.GraphQLField):
+class Field(LazyInitMixin, ListMixin, graphql.GraphQLField):
     __slots__ = ()
 
     @classmethod
@@ -22,11 +24,16 @@ class Field(ListMixin, graphql.GraphQLField):
     def get_resolver(self, resolver, of_type):
         return Resolver(self, resolver).func or self.get_default_resolver(of_type)
 
-    def __init__(self, of_type: Union[GraphQLType, Type[GraphQLType]], resolver=None, **kwargs):
+    @staticmethod
+    def resolve_lazy_type(of_type):
+        assert inspect.isclass(of_type) and issubclass(of_type, GraphQLType) or isinstance(of_type, GraphQLType) or inspect.isfunction(of_type), \
+            f'"of_type" needs to be a valid GraphQlType or a lazy reference'
+        of_type = of_type() if inspect.isfunction(of_type) else of_type
         of_type = of_type() if inspect.isclass(of_type) else of_type
-        assert isinstance(of_type, GraphQLType) or inspect.isfunction(of_type), \
-            f'"of_type" needs to be a valid GraphQlType'
+        return of_type
 
+    def __init__(self, of_type: Union[Type[GraphQLType], Callable], resolver=None, **kwargs):
+        of_type = self.resolve_lazy_type(of_type)
         resolver = self.get_resolver(resolver, of_type)
         assert callable(resolver), f'resolver needs to be callable, not {resolver}'
 

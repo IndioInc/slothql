@@ -1,9 +1,7 @@
 import inspect
-
 from typing import Tuple, Type, Iterable
 
 import graphql
-from graphql.type.definition import GraphQLType
 
 from slothql.fields import Field
 from slothql.utils import is_magic_name, get_attr_fields
@@ -11,7 +9,7 @@ from slothql.utils.singleton import Singleton
 
 
 class ObjectOptions:
-    __slots__ = 'abstract', 'fields'
+    __slots__ = 'object', 'abstract', 'fields'
 
     def set_defaults(self):
         for name in (n for n in dir(self) if not is_magic_name(n)):
@@ -26,16 +24,6 @@ class ObjectOptions:
                 setattr(self, name, value)
             except AttributeError:
                 raise AttributeError(f'Meta received an unexpected attribute "{name} = {value}"')
-        self.resolve_lazy_fields()
-
-    def resolve_lazy_fields(self):
-        for name, field in self.fields.items():
-            if inspect.isfunction(field.type):
-                resolved = field.type()
-                resolved = resolved() if inspect.isclass(resolved) else resolved
-                assert isinstance(resolved, GraphQLType), \
-                    f'Lazy function {field.type} should return a valid GraphQLType, received {resolved}'
-                field.type = resolved
 
 
 class ObjectMeta(Singleton):
@@ -90,7 +78,6 @@ class Object(graphql.GraphQLObjectType, metaclass=ObjectMeta):
         return super().__new__(*more)
 
     def __init__(self, **kwargs):
-        self._meta.resolve_lazy_fields()
         super().__init__(name=self.__class__.__name__, fields=self._meta.fields, **kwargs)
 
     class Meta:

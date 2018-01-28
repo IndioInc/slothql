@@ -10,7 +10,7 @@ def test_model__missing_model():
         class Example(Model):
             class Meta:
                 pass
-    assert f'"model" is required for object ModelOptions'
+    assert f'"model" is required for object ModelOptions' == str(exc_info.value)
 
 
 def test_model__model_not_registered():
