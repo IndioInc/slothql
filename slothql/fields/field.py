@@ -24,7 +24,8 @@ class Field(ListMixin, graphql.GraphQLField):
 
     def __init__(self, of_type: Union[GraphQLType, Type[GraphQLType]], resolver=None, **kwargs):
         of_type = of_type() if inspect.isclass(of_type) else of_type
-        assert isinstance(of_type, GraphQLType), f'"of_type" needs to be a valid GraphQlType'
+        assert isinstance(of_type, GraphQLType) or inspect.isfunction(of_type), \
+            f'"of_type" needs to be a valid GraphQlType'
 
         resolver = self.get_resolver(resolver, of_type)
         assert callable(resolver), f'resolver needs to be callable, not {resolver}'
