@@ -43,15 +43,3 @@ def test_list_field(resolver, expected):
     schema = slothql.Schema(query=Query)
 
     assert {'data': {'list': expected}} == slothql.gql(schema, 'query { list }')
-
-
-@pytest.mark.xfail
-def test_q__exception_not_handled():
-    def resolver(*_):
-        raise RuntimeError
-
-    class Query(slothql.Object):
-        hello = slothql.String(resolver=resolver)
-
-    with pytest.raises(RuntimeError):
-        print(slothql.gql(slothql.Schema(query=Query), 'query { hello }'))

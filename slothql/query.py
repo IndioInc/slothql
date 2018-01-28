@@ -19,23 +19,25 @@ class QueryExecutor:
         return {'data': result.data}
 
     def execute_query(self, query: str) -> ExecutionResult:
-        source = Source(query)
-
         try:
-            document_ast = parse(source=source)
+            ast = get_ast(query)
         except GraphQLSyntaxError as e:
             return ExecutionResult(errors=[e], invalid=True)
 
-        validation_errors = validate(self.schema, document_ast)
+        validation_errors = validate(self.schema, ast)
         if validation_errors:
             return ExecutionResult(errors=validation_errors, invalid=True)
-        return execute(self.schema, document_ast)
+        return execute(self.schema, ast)
 
     @classmethod
     def format_error(cls, error: Exception) -> dict:
         if isinstance(error, GraphQLSyntaxError):
             return format_error(error)
         return {'message': str(error)}
+
+
+def get_ast(query: str):
+    return parse(Source(query))
 
 
 def gql(schema: slothql.Schema, query: str) -> dict:
