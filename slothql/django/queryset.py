@@ -26,11 +26,11 @@ def remove_selections(selections: Selections, selects: tuple):
 
 def get_optimized_queryset(manager: models.Manager, selections: Selections):
     queryset: models.QuerySet = manager.get_queryset()
-    selects = tuple(get_selects(manager.model, selections))
-    if selects:
-        queryset = queryset.select_related(*selects)
-        selections = remove_selections(selections, selects)
+    # selects = tuple(get_selects(manager.model, selections))
+    # if selects:
+    #     queryset = queryset.select_related(*selects)
+    #     selections = remove_selections(selections, selects)
     prefetches = tuple(get_prefetches(manager.model, selections))
     if prefetches:
-        pass
+        queryset = queryset.prefetch_related(*prefetches)
     return queryset
