@@ -2,7 +2,6 @@ import pytest
 from unittest import mock
 
 from django.db import models
-from django.db.models import Prefetch
 
 from ..queryset import get_optimized_queryset, remove_selections
 
@@ -43,7 +42,6 @@ def test_select(get_queryset, selections, select):
     assert select_related.return_value == get_optimized_queryset(Bar._default_manager, selections)
     select_related.assert_called_once_with(*select)
     get_queryset.prefetch_related.assert_not_called()
-
 
 
 @pytest.mark.parametrize('input_selections, selects, exoected', (

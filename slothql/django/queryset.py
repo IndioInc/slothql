@@ -1,33 +1,23 @@
-from typing import Dict, Iterable
+from typing import Iterable, Type
 
 from django.db import models
 
 from slothql.selections import selections_to_dict, Selections
+from .utils.model import get_selectable_relations, get_relations
 
 
-def get_forward_fields(model: models.Model) -> Dict[str, models.Field]:
-    return {field.name: field for field in model._meta.get_fields()
-            if isinstance(field, (models.ForeignKey, models.OneToOneField))}
-
-
-def get_relation_fields(mode: models.Model) -> Dict[str, models.Field]:
-    return {}
-
-
-def get_selects(model: models.Model, root_selections: Selections) -> Iterable[str]:
-    forward_relations = get_forward_fields(model)
+def get_selects(model: Type[models.Model], root_selections: Selections) -> Iterable[str]:
+    forward_relations = get_selectable_relations(model)
     for name, selections in root_selections.items():
         if selections and name in forward_relations:
-            model = forward_relations[name].target_field.model
-            yield from ([f'{name}__{s}' for s in get_selects(model, selections)] or (name,))
+            yield from ([f'{name}__{s}' for s in get_selects(forward_relations[name], selections)] or (name,))
 
 
-def get_prefetches(model: models.Model, root_selections: Selections) -> Iterable[str]:
-    relations = get_relation_fields(model)
+def get_prefetches(model: Type[models.Model], root_selections: Selections) -> Iterable[str]:
+    relations = get_relations(model)
     for name, selections in root_selections.items():
         if selections and name in relations:
-            model = relations[name].target_field.model
-            yield from ([f'{name}__{s}' for s in get_prefetches(model, selections)] or (name,))
+            yield from ([f'{name}__{s}' for s in get_prefetches(relations[name], selections)] or (name,))
 
 
 def remove_selections(selections: Selections, selects: tuple):
@@ -42,5 +32,5 @@ def get_optimized_queryset(manager: models.Manager, selections: Selections):
         selections = remove_selections(selections, selects)
     prefetches = tuple(get_prefetches(manager.model, selections))
     if prefetches:
-        queryset = queryset.prefetch_related(*prefetches)
+        pass
     return queryset
