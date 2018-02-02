@@ -1,12 +1,12 @@
 SlothQL
 =======
 
-.. image:: https://travis-ci.org/karol-gruszczyk/slothql.svg?branch=master
-    :target: https://travis-ci.org/karol-gruszczyk/slothql
+.. image:: https://travis-ci.org/IndioInc/slothql.svg?branch=master
+    :target: https://travis-ci.org/IndioInc/slothql
     :alt: Build
 
-.. image:: https://coveralls.io/repos/github/karol-gruszczyk/slothql/badge.svg?branch=master
-    :target: https://coveralls.io/github/karol-gruszczyk/slothql?branch=master
+.. image:: https://coveralls.io/repos/github/IndioInc/slothql/badge.svg?branch=master
+    :target: https://coveralls.io/github/IndioInc/slothql?branch=master
     :alt: Coverage
 
 
@@ -18,4 +18,4 @@ Requirements
 More info
 ---------
 
-`GitHub <https://github.com/karol-gruszczyk/slothql/>`__
+`GitHub <https://github.com/IndioInc/slothql/>`__

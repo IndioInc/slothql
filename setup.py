@@ -14,7 +14,7 @@ setup(
 
     packages=find_packages(exclude=['*.tests*']),
 
-    url='https://github.com/karol-gruszczyk/slothql/',
+    url='https://github.com/IndioInc/slothql/',
     keywords='graphql framework django async aiohttp relay graphene',
 
     license='MIT',
@@ -30,7 +30,7 @@ setup(
     python_requires='~=3.6',
 
     install_requires=[
-        'graphql-core>=2.0<3',
+        'graphql-core>=2.0,<3',
     ],
     platforms='any',
     include_package_data=True,

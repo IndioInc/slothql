@@ -3,8 +3,8 @@ SlothQL is a very thin layer on top of [graphql-core](https://github.com/graphql
 (port from [graphql-js](https://github.com/graphql/graphql-js)),
 providing a really simple and flexible interface.
 
-[![Build Status](https://travis-ci.org/karol-gruszczyk/slothql.svg?branch=master)](https://travis-ci.org/karol-gruszczyk/slothql)
-[![Coverage Status](https://coveralls.io/repos/github/karol-gruszczyk/slothql/badge.svg?branch=master)](https://coveralls.io/github/karol-gruszczyk/slothql?branch=master)
+[![Build Status](https://travis-ci.org/IndioInc/slothql.svg?branch=master)](https://travis-ci.org/IndioInc/slothql)
+[![Coverage Status](https://coveralls.io/repos/github/IndioInc/slothql/badge.svg?branch=master)](https://coveralls.io/github/IndioInc/slothql?branch=master)
 
 ## Requirements
 * Python 3.6+
@@ -17,7 +17,7 @@ providing a really simple and flexible interface.
 
 # Install
 ```bash
-pip install git+https://github.com/karol-gruszczyk/slothql.git
+pip install git+https://github.com/IndioInc/slothql.git
 ```
 
 ## Quick start
