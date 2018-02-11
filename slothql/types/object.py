@@ -3,6 +3,7 @@ from typing import Tuple, Type, Iterable
 
 import graphql
 
+from slothql.base import BaseType
 from slothql.fields import Field
 from slothql.utils import is_magic_name, get_attr_fields
 from slothql.utils.singleton import Singleton
@@ -71,14 +72,14 @@ class ObjectMeta(Singleton):
         return new
 
 
-class Object(graphql.GraphQLObjectType, metaclass=ObjectMeta):
+class Object(BaseType, metaclass=ObjectMeta):
     @classmethod
     def __new__(cls, *more):
         assert not cls._meta.abstract, f'Abstract type {cls.__name__} can not be instantiated'
         return super().__new__(*more)
 
     def __init__(self, **kwargs):
-        super().__init__(name=self.__class__.__name__, fields=self._meta.fields, **kwargs)
+        super().__init__(graphql.GraphQLObjectType(name=self.__class__.__name__, fields=self._meta.fields, **kwargs))
 
     class Meta:
         abstract = True

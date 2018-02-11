@@ -50,7 +50,7 @@ class TestObjectInheritance:
         class Inherit(Object):
             field = field_mock
 
-        assert Inherit().name == 'Inherit'
+        assert Inherit()._type.name == 'Inherit'
 
     def test_abstract_inherit(self):
         class Inherit(Object):
@@ -93,7 +93,7 @@ class TestObjectFields:
         class Inherit(Object):
             field = fields.Field(mock.Mock(spec=Object))
 
-        assert Inherit._meta.fields == Inherit().fields
+        assert Inherit._meta.fields == Inherit()._type.fields
 
 
 def test_merge_object_options_dicts():
@@ -141,15 +141,15 @@ def test_no_fields_abstract():
             abstract = True
 
 
-def test_resolver_lambda(info):
+def test_resolver_lambda(info_mock):
     class Test(Object):
         field = slothql.String(resolver=lambda obj: obj)
 
     expected = object()
-    assert expected == Test.field.resolver(expected, info(field_name='field'))
+    assert expected == Test.field.resolver(expected, info_mock(field_name='field'))
 
 
-def test_resolver_staticmethod(info):
+def test_resolver_staticmethod(info_mock):
     class Test(Object):
         @staticmethod
         def get_field(obj):
@@ -158,10 +158,10 @@ def test_resolver_staticmethod(info):
         field = slothql.String(resolver=get_field)
 
     expected = object()
-    assert expected == Test.field.resolver(expected, info(field_name='field'))
+    assert expected == Test.field.resolver(expected, info_mock(field_name='field'))
 
 
-def test_resolver_classmethod(info):
+def test_resolver_classmethod(info_mock):
     class Test(Object):
         @classmethod
         def get_field(cls, obj):
@@ -170,10 +170,10 @@ def test_resolver_classmethod(info):
         field = slothql.String(resolver=get_field)
 
     expected = object()
-    assert expected == Test.field.resolver(expected, info(field_name='field'))
+    assert expected == Test.field.resolver(expected, info_mock(field_name='field'))
 
 
-def test_resolver_method(info):
+def test_resolver_method(info_mock):
     class Test(Object):
         def get_field(self, obj):
             return obj
@@ -181,4 +181,18 @@ def test_resolver_method(info):
         field = slothql.String(resolver=get_field)
 
     expected = object()
-    assert expected == Test.field.resolver(expected, info(field_name='field'))
+    assert expected == Test.field.resolver(expected, info_mock(field_name='field'))
+
+
+def test_name_collision__fields():
+    class Query(slothql.Object):
+        fields = slothql.String(resolver=lambda: 'foo')
+
+    slothql.Schema(query=Query)
+
+
+def test_name_collision__interfaces():
+    class Query(slothql.Object):
+        interfaces = slothql.String(resolver=lambda: 'foo')
+
+    slothql.Schema(query=Query)

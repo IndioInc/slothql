@@ -1,5 +1,6 @@
 import graphql
 
+from slothql.base import BaseType
 from .field import Field
 
 
@@ -15,29 +16,29 @@ class Scalar(Field):
 
 class Boolean(Scalar):
     def __init__(self, **kwargs):
-        super().__init__(of_type=graphql.GraphQLBoolean, **kwargs)
+        super().__init__(of_type=BaseType(graphql.GraphQLBoolean), **kwargs)
 
 
 class Integer(Scalar):
     def __init__(self, **kwargs):
-        super().__init__(of_type=graphql.GraphQLInt, **kwargs)
+        super().__init__(of_type=BaseType(graphql.GraphQLInt), **kwargs)
 
 
 class Float(Scalar):
     def __init__(self, **kwargs):
-        super().__init__(of_type=graphql.GraphQLFloat, **kwargs)
+        super().__init__(of_type=BaseType(graphql.GraphQLFloat), **kwargs)
 
 
 class String(Scalar):
     def __init__(self, **kwargs):
-        super().__init__(of_type=graphql.GraphQLString, **kwargs)
+        super().__init__(of_type=BaseType(graphql.GraphQLString), **kwargs)
 
 
 class JSONString(Scalar):
     def __init__(self, **kwargs):
-        super().__init__(of_type=graphql.GraphQLString, **kwargs)
+        super().__init__(of_type=BaseType(graphql.GraphQLString), **kwargs)
 
 
 class ID(Scalar):
     def __init__(self, **kwargs):
-        super().__init__(of_type=graphql.GraphQLID, **kwargs)
+        super().__init__(of_type=BaseType(graphql.GraphQLID), **kwargs)

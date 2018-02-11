@@ -8,6 +8,7 @@ import graphql
 from graphql.type.definition import GraphQLType
 
 import slothql
+from slothql.base import BaseType
 
 
 def pytest_configure():
@@ -32,12 +33,12 @@ def pytest_runtest_setup(item):
 
 
 @pytest.fixture()
-def type():
-    return lambda: mock.Mock(spec=GraphQLType)
+def type_mock():
+    return lambda: BaseType(mock.Mock(spec=GraphQLType))
 
 
 @pytest.fixture()
-def info():
+def info_mock():
     return lambda **kwargs: mock.Mock(spec=graphql.ResolveInfo, **kwargs)
 
 
@@ -47,7 +48,7 @@ def resolver_mock():
 
 
 @pytest.fixture()
-def field_mock(type):
+def field_mock():
     return mock.Mock(spec=slothql.Field)
 
 
