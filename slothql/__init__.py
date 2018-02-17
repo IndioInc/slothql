@@ -5,9 +5,6 @@ from .query import gql
 
 try:
     from slothql import django
-except ImportError:
-    try:  # check if the ImportError was actually caused by django
-        import django
+except ImportError as e:
+    if str(e) != "No module named 'django'":
         raise
-    except ImportError:
-        pass
