@@ -1,10 +1,72 @@
 import inspect
-from typing import Union, Type, Callable
+from typing import Union, Type, Callable, Tuple, Iterable
 
 from graphql.type.definition import GraphQLType
 
+from slothql.utils import is_magic_name, get_attr_fields
+from slothql.utils.singleton import Singleton
 
-class BaseType:
+
+class TypeOptions:
+    __slots__ = 'abstract', 'description'
+
+    def set_defaults(self):
+        for name in (n for n in dir(self) if not is_magic_name(n)):
+            if not hasattr(self, name):
+                setattr(self, name, None)
+
+    def __init__(self, attrs: dict):
+        self.set_defaults()
+        for name, value in attrs.items():
+            try:
+                setattr(self, name, value)
+            except AttributeError:
+                raise AttributeError(f'Meta received an unexpected attribute "{name} = {value}"')
+
+
+class TypeMeta(Singleton):
+    def __new__(mcs, name, bases, attrs: dict, options_class: Type[TypeOptions] = TypeOptions, **kwargs):
+        assert 'Meta' not in attrs or inspect.isclass(attrs['Meta']), 'attribute Meta has to be a class'
+        meta_attrs = get_attr_fields(attrs['Meta']) if 'Meta' in attrs else {}
+        base_option = mcs.merge_options(*mcs.get_options_bases(bases))
+        meta = options_class(mcs.merge_options(base_option, mcs.get_option_attrs(base_option, attrs, meta_attrs)))
+        cls = super().__new__(mcs, name, bases, attrs)
+        cls._meta = meta
+        return cls
+
+    @classmethod
+    def get_option_attrs(mcs, base_attrs: dict, attrs: dict, meta_attrs: dict) -> dict:
+        abstract = meta_attrs.pop('abstract', False)
+        return {**meta_attrs, **{'abstract': abstract}}
+
+    @classmethod
+    def merge_options(mcs, *options: dict):
+        result = {}
+        for option_set in options:
+            for name, value in option_set.items():
+                result[name] = mcs.merge_field(result.get(name), value)
+        return result
+
+    @classmethod
+    def get_options_bases(mcs, bases: Tuple[Type['BaseType']]) -> Iterable[dict]:
+        yield from (
+            get_attr_fields(base._meta)
+            for base in reversed(bases) if hasattr(base, '_meta') and isinstance(base._meta, TypeOptions)
+        )
+
+    @classmethod
+    def merge_field(mcs, old, new):
+        if isinstance(new, dict):
+            return {**(old or {}), **new}
+        return new
+
+
+class BaseType(metaclass=TypeMeta):
+    @staticmethod
+    def __new__(cls, *more):
+        assert not cls._meta.abstract, f'Abstract type {cls.__name__} can not be instantiated'
+        return super().__new__(cls)
+
     def __init__(self, type_: GraphQLType):
         self._type = type_
 
