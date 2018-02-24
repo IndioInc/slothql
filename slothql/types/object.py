@@ -2,8 +2,8 @@ from typing import Type
 
 import graphql
 
-from slothql.base import BaseType, TypeMeta, TypeOptions
-from slothql.fields import Field
+from slothql.types.base import BaseType, TypeMeta, TypeOptions
+from slothql.types.fields import Field
 
 
 class ObjectOptions(TypeOptions):

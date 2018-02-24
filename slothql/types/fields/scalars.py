@@ -1,6 +1,6 @@
 import graphql
 
-from slothql.base import BaseType
+from slothql.types.base import BaseType
 from .field import Field
 
 

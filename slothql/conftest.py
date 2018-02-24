@@ -8,7 +8,7 @@ import graphql
 from graphql.type.definition import GraphQLType
 
 import slothql
-from slothql.base import BaseType
+from slothql.types.base import BaseType
 
 
 def pytest_configure():

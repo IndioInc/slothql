@@ -1,3 +1,4 @@
+import copy
 import inspect
 from typing import Union, Type, Callable, Tuple, Iterable
 
@@ -69,6 +70,7 @@ class BaseType(metaclass=TypeMeta):
 
     def __init__(self, type_: GraphQLType):
         self._type = type_
+        self._type.description = self._meta.description
 
 
 LazyType = Union[Type[BaseType], BaseType, Callable]
