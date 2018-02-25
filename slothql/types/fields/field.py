@@ -5,7 +5,7 @@ import graphql
 from slothql.utils import LazyInitMixin
 from slothql.types.base import LazyType, resolve_lazy_type, BaseType
 
-from .list import ListMixin
+from .mixins import ListMixin
 from .resolver import Resolver
 
 

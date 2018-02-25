@@ -1,3 +1,2 @@
 from .field import Field
-from .scalars import String, Boolean, Integer, JSONString, Float, ID
-from .datetime import DateTime, Date, Time
+from .generic import String, Boolean, Integer, JsonString, Float, ID, DateTime, Date, Time

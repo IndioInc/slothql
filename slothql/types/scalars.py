@@ -10,21 +10,13 @@ class ScalarType(BaseType):
             name=self._meta.name,
             description=self._meta.description,
             serialize=self.serialize,
-            parse_value=self.deserialize,
-            parse_literal=self.parse_literal,
+            parse_value=self.serialize,  # FIXME: noqa
+            parse_literal=self.serialize,  # FIXME: noqa
         ))
 
     @classmethod
     def serialize(cls, value):
         return value
-
-    @classmethod
-    def deserialize(cls, value):
-        return value
-
-    @classmethod
-    def parse_literal(cls, ast):
-        raise NotImplementedError
 
 
 class IntegerType(ScalarType):
@@ -32,19 +24,11 @@ class IntegerType(ScalarType):
         name = 'Integer'
         description = scalars.GraphQLInt.description
 
-    @classmethod
-    def parse_literal(cls, ast):
-        return scalars.parse_int_literal(ast)
-
 
 class FloatType(ScalarType):
     class Meta:
         name = 'Float'
         description = scalars.GraphQLFloat.description
-
-    @classmethod
-    def parse_literal(cls, ast):
-        return scalars.parse_float_literal(ast)
 
 
 class StringType(ScalarType):
@@ -52,29 +36,17 @@ class StringType(ScalarType):
         name = 'String'
         description = scalars.GraphQLString.description
 
-    @classmethod
-    def parse_literal(cls, ast):
-        return scalars.parse_string_literal(ast)
-
 
 class BooleanType(ScalarType):
     class Meta:
         name = 'Boolean'
         description = scalars.GraphQLBoolean.description
 
-    @classmethod
-    def parse_literal(cls, ast):
-        return scalars.parse_boolean_literal(ast)
-
 
 class IDType(ScalarType):
     class Meta:
         name = 'ID'
         description = scalars.GraphQLID.description
-
-    @classmethod
-    def parse_literal(cls, ast):
-        return scalars.parse_float_literal(ast)
 
 
 def patch_default_scalar(scalar_type: ScalarType, graphql_type: scalars.GraphQLScalarType):

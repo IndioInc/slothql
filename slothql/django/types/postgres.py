@@ -4,4 +4,4 @@ import slothql
 
 from .registry import TypeRegistry
 
-TypeRegistry().register(fields.JSONField, slothql.JSONString())
+TypeRegistry().register(fields.JSONField, slothql.JsonString())
