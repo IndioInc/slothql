@@ -5,7 +5,6 @@ from graphql import graphql
 import slothql
 
 
-@pytest.mark.incremental
 class TestSchema:
     @classmethod
     def setup_class(cls):
@@ -25,10 +24,7 @@ class TestSchema:
         query = 'query { hello }'
         assert 'world' == graphql(schema, query).data['hello']
 
-    @pytest.mark.parametrize("call", (
-            True,
-            False,
-    ))
+    @pytest.mark.parametrize("call", (True, False))
     def test_complex_schema(self, call):
         class Nested(slothql.Object):
             nested = slothql.Field(self.query_class() if call else self.query_class, lambda *_: {'world': 'not hello'})

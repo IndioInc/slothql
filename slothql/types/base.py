@@ -9,7 +9,7 @@ from slothql.utils.singleton import Singleton
 
 
 class TypeOptions:
-    __slots__ = 'abstract', 'description'
+    __slots__ = 'abstract', 'name', 'description'
 
     def set_defaults(self):
         for name in (n for n in dir(self) if not is_magic_name(n)):
@@ -70,7 +70,6 @@ class BaseType(metaclass=TypeMeta):
 
     def __init__(self, type_: GraphQLType):
         self._type = type_
-        self._type.description = self._meta.description
 
 
 LazyType = Union[Type[BaseType], BaseType, Callable]

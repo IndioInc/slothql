@@ -24,25 +24,6 @@ class TestScalar:
         serialize.assert_called_once_with(obj)
 
 
-def test_can_init_bool():
-    Boolean()
-
-
-def test_can_init_integer():
-    Integer()
-
-
-def test_can_init_float():
-    Float()
-
-
-def test_can_init_string():
-    String()
-
-
-def test_can_init_json_string():
-    JSONString()
-
-
-def test_can_init_json_id():
-    ID()
+@pytest.mark.parametrize('scalar_type', (Boolean, Integer, Float, String, JSONString, ID))
+def test_can_init(scalar_type):
+    scalar_type()
