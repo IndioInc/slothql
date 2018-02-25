@@ -1,14 +1,20 @@
+import pytest
+
 import graphql
 
 from slothql.types.base import BaseType
 
 
-def test_meta_description():
-    class TestType(BaseType):
+@pytest.mark.parametrize('type_name, expected_name', (
+        ('Foo', 'Foo'),
+        (None, 'FooType'),
+))
+def test_meta_name(type_name, expected_name):
+    class FooType(BaseType):
         def __init__(self):
             super().__init__(graphql.GraphQLString)
 
         class Meta:
-            description = 'foo'
+            name = type_name
 
-    # assert 'foo' == TestType._meta.description == TestType()._type.description != graphql.GraphQLString.description
+    assert expected_name == FooType()._meta.name

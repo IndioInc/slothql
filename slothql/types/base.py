@@ -25,19 +25,23 @@ class TypeOptions:
 
 
 class TypeMeta(Singleton):
-    def __new__(mcs, name, bases, attrs: dict, options_class: Type[TypeOptions] = TypeOptions, **kwargs):
+    def __new__(mcs, name: str, bases: Tuple[type], attrs: dict,
+                options_class: Type[TypeOptions] = TypeOptions, **kwargs):
         assert 'Meta' not in attrs or inspect.isclass(attrs['Meta']), 'attribute Meta has to be a class'
         meta_attrs = get_attr_fields(attrs['Meta']) if 'Meta' in attrs else {}
         base_option = mcs.merge_options(*mcs.get_options_bases(bases))
-        meta = options_class(mcs.merge_options(base_option, mcs.get_option_attrs(base_option, attrs, meta_attrs)))
+        meta = options_class(mcs.merge_options(base_option, mcs.get_option_attrs(name, base_option, attrs, meta_attrs)))
         cls = super().__new__(mcs, name, bases, attrs)
         cls._meta = meta
         return cls
 
     @classmethod
-    def get_option_attrs(mcs, base_attrs: dict, attrs: dict, meta_attrs: dict) -> dict:
-        abstract = meta_attrs.pop('abstract', False)
-        return {**meta_attrs, **{'abstract': abstract}}
+    def get_option_attrs(mcs, name: str, base_attrs: dict, attrs: dict, meta_attrs: dict) -> dict:
+        defaults = {
+            'name': meta_attrs.get('name') or name,
+            'abstract': meta_attrs.get('abstract', False),
+        }
+        return {**meta_attrs, **defaults}
 
     @classmethod
     def merge_options(mcs, *options: dict):
@@ -48,7 +52,7 @@ class TypeMeta(Singleton):
         return result
 
     @classmethod
-    def get_options_bases(mcs, bases: Tuple[Type['BaseType']]) -> Iterable[dict]:
+    def get_options_bases(mcs, bases: Tuple[type]) -> Iterable[dict]:
         yield from (
             get_attr_fields(base._meta)
             for base in reversed(bases) if hasattr(base, '_meta') and isinstance(base._meta, TypeOptions)
