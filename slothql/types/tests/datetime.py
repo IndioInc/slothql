@@ -2,7 +2,7 @@ import pytest
 
 import datetime
 
-from ..datetime import DateTime, Date, Time
+from ..datetime import DateTimeType, DateType, TimeType
 
 
 @pytest.mark.parametrize('value, expected', (
@@ -10,7 +10,7 @@ from ..datetime import DateTime, Date, Time
         (datetime.datetime(2005, 4, 2), '2005-04-02T00:00:00'),
 ))
 def test_datetime_serialize(value, expected):
-    assert expected == DateTime.serialize(value)
+    assert expected == DateTimeType.serialize(value)
 
 
 @pytest.mark.parametrize('value', (
@@ -19,7 +19,7 @@ def test_datetime_serialize(value, expected):
 ))
 def test_datetime_serialize_type(value):
     with pytest.raises(AssertionError) as exc_info:
-        DateTime.serialize(value)
+        DateTimeType.serialize(value)
     assert 'Expected datetime.datetime' in str(exc_info.value)
 
 
@@ -28,7 +28,7 @@ def test_datetime_serialize_type(value):
         (datetime.date(2005, 4, 2), '2005-04-02'),
 ))
 def test_date_serialize(value, expected):
-    assert expected == Date.serialize(value)
+    assert expected == DateType.serialize(value)
 
 
 @pytest.mark.parametrize('value', (
@@ -36,7 +36,7 @@ def test_date_serialize(value, expected):
 ))
 def test_datetime_serialize_type(value):
     with pytest.raises(AssertionError) as exc_info:
-        Date.serialize(value)
+        DateType.serialize(value)
     assert 'Expected datetime.date or datetime.datetime' in str(exc_info.value)
 
 
@@ -46,7 +46,7 @@ def test_datetime_serialize_type(value):
         (datetime.time(21, 37), '21:37:00'),
 ))
 def test_time_serialize(value, expected):
-    assert expected == Time.serialize(value)
+    assert expected == TimeType.serialize(value)
 
 
 @pytest.mark.parametrize('value', (
@@ -54,5 +54,5 @@ def test_time_serialize(value, expected):
 ))
 def test_time_serialize_type(value):
     with pytest.raises(AssertionError) as exc_info:
-        Time.serialize(value)
+        TimeType.serialize(value)
     assert 'Expected datetime.time or datetime.datetime' in str(exc_info.value)

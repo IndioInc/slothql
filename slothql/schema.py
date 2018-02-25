@@ -1,6 +1,6 @@
 import graphql
 
-from .base import LazyType, resolve_lazy_type
+from slothql.types.base import LazyType, resolve_lazy_type
 
 
 class Schema(graphql.GraphQLSchema):

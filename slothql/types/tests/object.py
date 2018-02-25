@@ -2,7 +2,7 @@ import pytest
 from unittest import mock
 
 import slothql
-from slothql import fields
+from slothql.types import fields
 
 from ..object import Object, ObjectMeta, ObjectOptions
 
