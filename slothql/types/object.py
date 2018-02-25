@@ -24,8 +24,8 @@ class ObjectMeta(TypeMeta):
         return cls
 
     @classmethod
-    def get_option_attrs(mcs, base_attrs: dict, attrs: dict, meta_attrs: dict) -> dict:
-        return {**super().get_option_attrs(base_attrs, attrs, meta_attrs), **{
+    def get_option_attrs(mcs, name: str, base_attrs: dict, attrs: dict, meta_attrs: dict) -> dict:
+        return {**super().get_option_attrs(name, base_attrs, attrs, meta_attrs), **{
             'fields': {name: field for name, field in attrs.items() if isinstance(field, Field)},
         }}
 

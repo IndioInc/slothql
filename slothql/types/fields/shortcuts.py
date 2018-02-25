@@ -1,6 +1,7 @@
 from slothql.types.scalars import IntegerType, FloatType, StringType, BooleanType, IDType
 from slothql.types.json import JsonStringType
 from slothql.types.datetime import DateTimeType, DateType, TimeType
+from slothql.types.enum import Enum
 from .field import Field
 
 

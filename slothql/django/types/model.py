@@ -11,7 +11,7 @@ from .registry import TypeRegistry
 
 
 class ModelOptions(ObjectOptions):
-    __slots__ = ('model',)
+    __slots__ = 'model',
 
     def __init__(self, attrs: dict):
         super().__init__(attrs)
@@ -24,13 +24,13 @@ class ModelMeta(ObjectMeta):
         return super().__new__(mcs, name, bases, attrs, options_class, **kwargs)
 
     @classmethod
-    def get_option_attrs(mcs, base_attrs: dict, attrs: dict, meta_attrs: dict):
+    def get_option_attrs(mcs, name: str, base_attrs: dict, attrs: dict, meta_attrs: dict):
         fields = meta_attrs.pop('fields', None)
         if fields:
             model = base_attrs.get('model') or meta_attrs.get('model')
             resolved_fields = mcs.get_meta_fields(model, fields)
             attrs.update({name: resolved_fields[name] for name in set(resolved_fields) - set(attrs)})
-        return super().get_option_attrs(base_attrs, attrs, meta_attrs)
+        return super().get_option_attrs(name, base_attrs, attrs, meta_attrs)
 
     @classmethod
     def get_meta_fields(mcs, model: Type[models.Model], fields: Union[str, Iterable[str]]) -> Dict[str, Field]:
