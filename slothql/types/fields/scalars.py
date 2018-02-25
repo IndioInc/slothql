@@ -4,7 +4,7 @@ from .. import scalars
 from .field import Field
 
 
-class Scalar(Field):
+class SerializableMixin(Field):
     @classmethod
     def resolve(cls, resolver, parent, info: graphql.ResolveInfo):
         return cls.serialize(super().resolve(resolver, parent, info))
@@ -14,31 +14,31 @@ class Scalar(Field):
         return value
 
 
-class Boolean(Scalar):
+class Boolean(Field):
     def __init__(self, **kwargs):
         super().__init__(of_type=scalars.BooleanType, **kwargs)
 
 
-class Integer(Scalar):
+class Integer(Field):
     def __init__(self, **kwargs):
         super().__init__(of_type=scalars.IntegerType, **kwargs)
 
 
-class Float(Scalar):
+class Float(Field):
     def __init__(self, **kwargs):
         super().__init__(of_type=scalars.FloatType, **kwargs)
 
 
-class String(Scalar):
+class String(Field):
     def __init__(self, **kwargs):
         super().__init__(of_type=scalars.StringType, **kwargs)
 
 
-class JSONString(Scalar):
+class JSONString(Field):
     def __init__(self, **kwargs):
         super().__init__(of_type=scalars.StringType, **kwargs)
 
 
-class ID(Scalar):
+class ID(Field):
     def __init__(self, **kwargs):
         super().__init__(of_type=scalars.IDType, **kwargs)

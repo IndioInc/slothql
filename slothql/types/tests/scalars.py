@@ -19,3 +19,13 @@ from .. import scalars
 ))
 def test_scalar_type_props(scalar_type, name, value):
     assert value == getattr(scalar_type()._type, name)
+
+
+@pytest.mark.xfail
+def test_serialize():
+    pass
+
+
+@pytest.mark.xfail
+def test_parse():
+    pass

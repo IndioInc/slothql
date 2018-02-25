@@ -3,27 +3,39 @@ from unittest import mock
 
 from graphql.type.definition import GraphQLType
 
-from ..scalars import Field, Scalar, JSONString, String, Integer, Boolean, Float, ID
+import slothql
+from slothql.types.base import BaseType
+from ..scalars import Field, SerializableMixin
 
 
 @pytest.mark.incremental
-class TestScalar:
+class TestSerializableMixin:
     def test_can_init(self):
-        Scalar(of_type=GraphQLType())
+        SerializableMixin(of_type=BaseType(type_=GraphQLType()))
 
     def test_default_serialize(self):
         obj = object()
-        assert obj == Scalar.serialize(obj)
+        assert obj == SerializableMixin.serialize(obj)
 
-    def test_resolve(self):
-        obj, resolver, info = object(), object(), object()
+    def test_resolve(self, info_mock):
+        obj, resolver, info = object(), object(), info_mock()
         with mock.patch.object(Field, 'resolve', return_value=obj) as super_resolve:
-            with mock.patch.object(Scalar, 'serialize', return_value=obj) as serialize:
-                assert obj == Scalar.resolve(resolver, obj, info)
+            with mock.patch.object(SerializableMixin, 'serialize', return_value=obj) as serialize:
+                assert obj == SerializableMixin.resolve(resolver, obj, info)
         super_resolve.assert_called_once_with(resolver, obj, info)
         serialize.assert_called_once_with(obj)
 
 
-@pytest.mark.parametrize('scalar_type', (Boolean, Integer, Float, String, JSONString, ID))
-def test_can_init(scalar_type):
+@pytest.mark.parametrize('scalar_type', (
+        slothql.Boolean,
+        slothql.Integer,
+        slothql.Float,
+        slothql.String,
+        slothql.JSONString,
+        slothql.ID,
+        slothql.DateTime,
+        slothql.Date,
+        slothql.Time,
+))
+def test_passing_kwargs(scalar_type):
     scalar_type()

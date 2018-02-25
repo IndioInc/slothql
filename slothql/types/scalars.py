@@ -10,12 +10,16 @@ class ScalarType(BaseType):
             name=self._meta.name,
             description=self._meta.description,
             serialize=self.serialize,
-            parse_value=self.serialize,
+            parse_value=self.deserialize,
             parse_literal=self.parse_literal,
         ))
 
     @classmethod
     def serialize(cls, value):
+        return value
+
+    @classmethod
+    def deserialize(cls, value):
         return value
 
     @classmethod
