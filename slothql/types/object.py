@@ -38,5 +38,5 @@ class Object(BaseType, metaclass=ObjectMeta):
         abstract = True
 
     @classmethod
-    def resolve(cls, obj, info):
-        return obj
+    def resolve(cls, parent, info: graphql.ResolveInfo, args: dict):
+        return parent

@@ -36,14 +36,14 @@ class Parent(Model):
         fields = '__all__'
 
 
-def test_resolve__relation(info_mock):
-    manager = mock.Mock(models.Manager)
-    manager.get_queryset.return_value = [1, 2, 3]
-    parent = mock.Mock(spec=Parent, children=manager)
-    assert [1, 2, 3] == Parent.children.resolver(parent, info_mock(field_name='children'))
+def test_resolve__relation(info_mock, manager_mock, queryset_mock):
+    manager_mock.get_queryset.return_value = queryset_mock
+    parent = mock.Mock(spec=Parent, children=manager_mock)
+    assert queryset_mock.filter() == Parent.children.resolver(parent, info_mock(field_name='children'))
 
 
-def test_resolve__default(info_mock):
-    with mock.patch.object(Child._meta.model._default_manager, 'get_queryset', return_value=[1, 2, 3]) as get_queryset:
-        assert [1, 2, 3] == Parent.children.resolver(None, info_mock(field_name='children'))
+def test_resolve__default(info_mock, queryset_mock):
+    model = Child._meta.model
+    with mock.patch.object(model._default_manager, 'get_queryset', return_value=queryset_mock) as get_queryset:
+        assert queryset_mock.filter() == Parent.children.resolver(None, info_mock(field_name='children'))
         get_queryset.assert_called_with()

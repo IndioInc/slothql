@@ -35,4 +35,4 @@ class TestField:
 ))
 def test_resolve_field(obj, expected, info_mock, type_mock):
     for field_name, expected_value in expected.items():
-        assert expected_value == Field(type_mock()).resolve_field(obj, info_mock(field_name=field_name))
+        assert expected_value == Field(type_mock()).resolve_field(obj, info_mock(field_name=field_name), {})

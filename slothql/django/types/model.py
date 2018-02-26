@@ -1,6 +1,7 @@
 import inspect
 from typing import Type, Iterable, Dict, Union
 
+import graphql
 from django.db import models
 
 from slothql import Field
@@ -77,7 +78,14 @@ class Model(Object, metaclass=ModelMeta):
         abstract = True
 
     @classmethod
-    def resolve(cls, obj, info):
-        if obj is None:
-            return cls._meta.model._default_manager.get_queryset()
-        return obj.get_queryset() if isinstance(obj, models.Manager) else obj
+    def filter_queryset(cls, queryset: models.QuerySet, args: dict):
+        assert isinstance(queryset, models.QuerySet), f'expected QuerySet, received {repr(queryset)}'
+        return queryset.filter()
+
+    @classmethod
+    def resolve(cls, parent, info: graphql.ResolveInfo, args: dict):
+        if parent is None:
+            queryset = cls._meta.model._default_manager.get_queryset()
+        else:
+            queryset = parent.get_queryset() if isinstance(parent, models.Manager) else parent
+        return cls.filter_queryset(queryset, args)
