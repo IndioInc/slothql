@@ -10,8 +10,8 @@ def test_get_selections_to_dict():
             ast.Field(name='bar'),
             ast.Field(name='more_nested', selection_set=ast.SelectionSet(selections=[
                 ast.Field(name='baz'),
-            ]))
-        ]))
+            ])),
+        ])),
     ]
 
     assert {'foo': None, 'nested': {'bar': None, 'more_nested': {'baz': None}}} == selections_to_dict(selections)

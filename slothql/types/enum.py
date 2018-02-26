@@ -1,5 +1,5 @@
 import graphql
-from typing import Tuple, Type
+from typing import Type
 
 from graphql.type import GraphQLEnumValue
 

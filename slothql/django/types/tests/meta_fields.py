@@ -19,7 +19,7 @@ class MetaFieldsModel(models.Model):
 
 def test_fields__regular():
     field_mock = mock.Mock(spec=slothql.Field)
-    with mock.patch.object(TypeRegistry, 'get', return_value=field_mock) as get:  # type: mock.MagicMock
+    with mock.patch.object(TypeRegistry, 'get', return_value=field_mock) as get:
         class Test(Model):
             class Meta:
                 model = MetaFieldsModel
@@ -44,7 +44,7 @@ def test_invalid_field(declared_fields, exc_message):
 
 
 def test_fields__all__(field_mock):
-    with mock.patch.object(TypeRegistry, 'get', return_value=field_mock) as get:  # type: mock.MagicMock
+    with mock.patch.object(TypeRegistry, 'get', return_value=field_mock):
         class Test(Model):
             class Meta:
                 model = MetaFieldsModel

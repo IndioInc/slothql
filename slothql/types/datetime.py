@@ -38,4 +38,3 @@ class TimeType(StringType):
         elif isinstance(value, datetime.time):
             return value.isoformat()
         raise AssertionError(f'Expected datetime.time or datetime.datetime instance, got {repr(value)}')
-

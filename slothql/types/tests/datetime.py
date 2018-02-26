@@ -34,7 +34,7 @@ def test_date_serialize(value, expected):
 @pytest.mark.parametrize('value', (
         datetime.time(21, 37),
 ))
-def test_datetime_serialize_type(value):
+def test_date_serialize_type(value):
     with pytest.raises(AssertionError) as exc_info:
         DateType.serialize(value)
     assert 'Expected datetime.date or datetime.datetime' in str(exc_info.value)

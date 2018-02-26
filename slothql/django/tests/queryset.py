@@ -34,7 +34,7 @@ def test_0_depth(get_queryset: mock.MagicMock):
         ({'bar': {'field': None}}, ('bar',)),
         ({'bar': {'bar': {'field': None}}}, ('bar__bar',)),
         ({'bar': {'foo': {'field': None}}}, ('bar__foo',)),
-        ({'foo': {'field': None}, 'bar': {'foo': {'field': None}}}, ('foo', 'bar__foo',)),
+        ({'foo': {'field': None}, 'bar': {'foo': {'field': None}}}, ('foo', 'bar__foo')),
 ))
 @mock.patch.object(Bar._default_manager, 'get_queryset')
 def test_select(get_queryset, selections, select):  # FIXME: temporary prefetching everything

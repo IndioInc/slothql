@@ -1,4 +1,4 @@
-from typing import List, Union, Dict, Optional
+from typing import List, Dict, Optional
 
 import graphql
 from graphql.language import ast
