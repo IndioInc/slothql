@@ -29,11 +29,20 @@ class Field(LazyInitMixin, ListMixin, graphql.GraphQLField):
         assert source is None or isinstance(source, str), f'source= has to be of type str'
         self.source = source
 
-        super().__init__(type=of_type._type, resolver=functools.partial(self.resolve, resolver), args={}, **kwargs)
+        args = of_type.args() if isinstance(of_type, types.Object) else {}
+        self.filters = of_type.filters() if isinstance(of_type, types.Object) else {}
+
+        super().__init__(type=of_type._type, resolver=functools.partial(self.resolve, resolver), args=args, **kwargs)
+
+    @classmethod
+    def apply_filters(cls, resolved, args: dict):
+        for field_name, filters in args:
+            raise NotImplementedError
+        return resolved
 
     @classmethod
     def resolve(cls, resolver: Resolver, obj, info: graphql.ResolveInfo, **kwargs):
-        return resolver(obj, info, kwargs)
+        return cls.apply_filters(resolver(obj, info, kwargs), kwargs)
 
     def __repr__(self) -> str:
         return f'<Field: {repr(self.type)}>'

@@ -1,6 +1,6 @@
 import pytest
 
-from ..laziness import LazyInitMixin
+from ..laziness import LazyInitMixin, LazyInitProxy
 
 
 class Executed(Exception):
@@ -8,14 +8,14 @@ class Executed(Exception):
 
 
 class Class(LazyInitMixin):
-    def __init__(self, a, b):
+    def __init__(self, a='foo', b='bar'):
         self.a = a
         self.b = b
         raise Executed
 
 
 def test_lazy_init_getattr():
-    a = Class('foo', b='bar')
+    a = Class()
     with pytest.raises(Executed):
         hasattr(a, 'a')
     assert 'foo' is a.a
@@ -23,7 +23,7 @@ def test_lazy_init_getattr():
 
 
 def test_lazy_init_setattr():
-    a = Class('foo', b='bar')
+    a = Class()
     with pytest.raises(Executed):
         a.c = 'not baz'  # isn't being fully executed, as an exception occurs first in __init__
     a.c = 'baz'
@@ -33,4 +33,9 @@ def test_lazy_init_setattr():
 
 
 def test_lazy_init_isinstance():
-    assert isinstance(Class('foo', b='bar'), Class)
+    assert isinstance(Class(), Class)
+
+
+@pytest.mark.xfail
+def test_lazy_init_type():
+    assert type(Class()) is Class
