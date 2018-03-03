@@ -49,4 +49,4 @@ class Object(BaseType, metaclass=ObjectMeta):
 
     @classmethod
     def filters(cls) -> Dict[str, FilterSet]:
-        return None
+        return {name: get_filter_fields(field.type) for name, field in cls._meta.fields.items()}
