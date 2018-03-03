@@ -1,5 +1,5 @@
 from .types.fields import Field, Integer, Float, String, Boolean, ID, JsonString, DateTime, Date, Time
-from .types import Object, Enum, EnumValue
+from .types import Object, Enum, EnumValue, Union
 from .schema import Schema
 from .query import gql
 
@@ -13,6 +13,7 @@ __all__ = (
     # types
     'Object',
     'Enum', 'EnumValue',
+    'Union',
 
     'Schema',
     'gql',

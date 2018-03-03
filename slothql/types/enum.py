@@ -3,10 +3,10 @@ from typing import Type
 
 from graphql.type import GraphQLEnumValue
 
-from .base import BaseType, TypeMeta, TypeOptions
+from .base import BaseType, BaseMeta, BaseOptions
 
 
-class EnumOptions(TypeOptions):
+class EnumOptions(BaseOptions):
     __slots__ = 'values',
 
     def __init__(self, attrs: dict):
@@ -14,7 +14,7 @@ class EnumOptions(TypeOptions):
         assert self.abstract or self.values, f'"{self.name}" is missing valid `Enum` values'
 
 
-class EnumMeta(TypeMeta):
+class EnumMeta(BaseMeta):
     def __new__(mcs, *args, options_class: Type[EnumOptions] = EnumOptions, **kwargs):
         return super().__new__(mcs, *args, options_class, **kwargs)
 

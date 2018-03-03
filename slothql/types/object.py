@@ -2,13 +2,12 @@ from typing import Type, Dict
 
 import graphql
 
-from slothql.arguments.filters import get_filter_fields
-from slothql.types.base import BaseType, TypeMeta, TypeOptions
-from slothql.types.fields import Field
-from slothql.arguments.filters import FilterSet
+from slothql.arguments.filters import get_filter_fields, FilterSet
+from .base import BaseType, BaseMeta, BaseOptions
+from .fields import Field
 
 
-class ObjectOptions(TypeOptions):
+class ObjectOptions(BaseOptions):
     __slots__ = 'abstract', 'fields'
 
     def set_defaults(self):
@@ -16,7 +15,7 @@ class ObjectOptions(TypeOptions):
         self.fields = {}
 
 
-class ObjectMeta(TypeMeta):
+class ObjectMeta(BaseMeta):
     __slots__ = ()
 
     def __new__(mcs, name, bases, attrs: dict, options_class: Type[ObjectOptions] = ObjectOptions, **kwargs):
