@@ -2,7 +2,7 @@ from typing import Iterable, Type
 
 from django.db import models
 
-from slothql.selections import selections_to_dict, Selections
+from slothql.selections import Selections
 from .utils.model import get_selectable_relations, get_relations
 
 

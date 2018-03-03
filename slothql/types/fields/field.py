@@ -2,26 +2,27 @@ import functools
 
 import graphql
 
+from slothql.arguments.utils import parse_argument
 from slothql.utils import LazyInitMixin
+from slothql import types
 from slothql.types.base import LazyType, resolve_lazy_type, BaseType
 
 from .mixins import ListMixin
-from .resolver import Resolver
+from .resolver import get_resolver, Resolver, PartialResolver, ResolveArgs
 
 
 class Field(LazyInitMixin, ListMixin, graphql.GraphQLField):
     __slots__ = ()
 
-    def get_default_resolver(self, of_type):
-        from slothql import types
+    def get_default_resolver(self, of_type: BaseType) -> Resolver:
         if isinstance(of_type, types.Object):
-            return lambda obj, info: of_type.resolve(self.resolve_field(obj, info), info)
+            return lambda obj, info, args: of_type.resolve(self.resolve_field(obj, info, args), info, args)
         return self.resolve_field
 
-    def get_resolver(self, resolver, of_type: BaseType):
-        return Resolver(self, resolver).func or self.get_default_resolver(of_type)
+    def get_resolver(self, resolver: PartialResolver, of_type: BaseType) -> Resolver:
+        return get_resolver(self, resolver) or self.get_default_resolver(of_type)
 
-    def __init__(self, of_type: LazyType, resolver=None, source: str = None, **kwargs):
+    def __init__(self, of_type: LazyType, resolver: PartialResolver = None, source: str = None, **kwargs):
         of_type = resolve_lazy_type(of_type)
         resolver = self.get_resolver(resolver, of_type)
         assert callable(resolver), f'resolver needs to be callable, not {resolver}'
@@ -29,11 +30,21 @@ class Field(LazyInitMixin, ListMixin, graphql.GraphQLField):
         assert source is None or isinstance(source, str), f'source= has to be of type str'
         self.source = source
 
-        super().__init__(type=of_type._type, resolver=functools.partial(self.resolve, resolver), **kwargs)
+        args = of_type.args() if isinstance(of_type, types.Object) else {}
+        super().__init__(type=of_type._type, resolver=functools.partial(self.resolve, resolver), args=args, **kwargs)
 
-    @classmethod
-    def resolve(cls, resolver, obj, info: graphql.ResolveInfo):
-        return resolver(obj, info)
+        self.filters = of_type.filters() if isinstance(of_type, types.Object) else {}
+
+    def apply_filters(self, resolved, args: dict):
+        for field_name, value in args.items():
+            filter_set = self.filters[field_name]
+            resolved = filter_set.apply(resolved, field_name, value)
+        return resolved
+
+    def resolve(self, resolver: Resolver, obj, info: graphql.ResolveInfo, **kwargs):
+        args = {name: parse_argument(value) for name, value in kwargs.items()}
+        resolved = resolver(obj, info, args)
+        return self.apply_filters(resolved, args) if self.many else resolved
 
     def __repr__(self) -> str:
         return f'<Field: {repr(self.type)}>'
@@ -41,7 +52,7 @@ class Field(LazyInitMixin, ListMixin, graphql.GraphQLField):
     def get_internal_name(self, name: str) -> str:
         return self.source or name
 
-    def resolve_field(self, obj, info: graphql.ResolveInfo):
+    def resolve_field(self, obj, info: graphql.ResolveInfo, args: ResolveArgs):
         if obj is None:
             return None
         name = self.get_internal_name(info.field_name)

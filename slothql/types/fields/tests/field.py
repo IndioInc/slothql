@@ -2,9 +2,6 @@ import collections
 from functools import partial
 
 import pytest
-from unittest import mock
-
-from graphql.type.definition import GraphQLType
 
 from ..field import Field
 
@@ -27,7 +24,7 @@ class TestField:
         assert partials_equal(partial(field.resolve, field.get_default_resolver(of_type)), field.resolver)
 
 
-@pytest.mark.parametrize("obj, expected", (
+@pytest.mark.parametrize('obj, expected', (
         ({'a': 1, 'b': 2}, {'a': 1, 'b': 2, 'c': None}),
         (collections.namedtuple('A', ('a', 'b'))(1, 2), {'a': 1, 'b': 2, 'c': None}),
         (None, {'a': None}),
@@ -35,4 +32,4 @@ class TestField:
 ))
 def test_resolve_field(obj, expected, info_mock, type_mock):
     for field_name, expected_value in expected.items():
-        assert expected_value == Field(type_mock()).resolve_field(obj, info_mock(field_name=field_name))
+        assert expected_value == Field(type_mock()).resolve_field(obj, info_mock(field_name=field_name), {})

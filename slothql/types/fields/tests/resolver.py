@@ -1,6 +1,6 @@
 import pytest
 
-from ..resolver import Resolver
+from ..resolver import PartialResolver, get_resolver
 
 
 class A:
@@ -38,19 +38,14 @@ class A:
         return 'foo'
 
 
-@pytest.mark.parametrize('func', (
+@pytest.mark.parametrize('resolver', (
         lambda: 'foo',
-        lambda o: 'foo',
-        lambda o, i: 'foo',
-        A.method1,
-        A.method2,
-        A.method3,
-        A.static1,
-        A.static2,
-        A.static3,
-        A.class1,
-        A.class2,
-        A.class3,
+        lambda parent: 'foo',
+        lambda parent, info: 'foo',
+        lambda parent, info, args: 'foo',
+        A.method1, A.method2, A.method3,
+        A.static1, A.static2, A.static3,
+        A.class1, A.class2, A.class3,
 ))
-def test_resolve(func):
-    assert 'foo' == Resolver(None, func).func(None, None)
+def test_resolve(resolver: PartialResolver, field_mock):
+    assert 'foo' == get_resolver(field_mock, resolver)(None, None, None)

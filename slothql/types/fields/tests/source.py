@@ -9,7 +9,7 @@ def test_field_source(type_mock, info_mock):
     class A(slothql.Object):
         foo = slothql.Field(type_mock(), source='bar')
 
-    assert 'baz' == A.foo.resolve_field({'bar': 'baz'}, info_mock(field_name='foo'))
+    assert 'baz' == A.foo.resolve_field({'bar': 'baz'}, info_mock(field_name='foo'), {})
 
 
 def test_integration():

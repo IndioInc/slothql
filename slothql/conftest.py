@@ -3,6 +3,7 @@ from unittest import mock
 
 import django
 from django.conf import settings
+from django.db import models
 
 import graphql
 from graphql.type.definition import GraphQLType
@@ -55,3 +56,13 @@ def field_mock():
 @pytest.fixture()
 def partials_equal():
     return lambda p1, p2: p1.func == p2.func and p1.args == p2.args and p1.keywords == p2.keywords
+
+
+@pytest.fixture()
+def manager_mock():
+    return mock.Mock(spec=models.Manager)
+
+
+@pytest.fixture()
+def queryset_mock():
+    return mock.Mock(spec=models.QuerySet)
