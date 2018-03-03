@@ -1,65 +1,71 @@
-from collections import OrderedDict
-from typing import Iterable, Callable, Optional, Dict
+import operator
+import functools
+import collections
+from typing import Iterable, Callable, Dict, Union, Tuple
 
 import graphql
-from graphql.language.ast import Value
+from graphql.language import ast
 
-Filter = Callable[[Iterable, Value], Iterable]
-
-
-def equals(iterable: Iterable, value: Value) -> Iterable:
-    yield from (i for i in iterable if i == value)
+Filter = Callable[[Iterable, ast.Value], Iterable]
+FilterValue = Union[int, str, bool]
+ScalarValueTypes = (ast.BooleanValue, ast.IntValue, ast.FloatValue, ast.StringValue, ast.EnumValue)
 
 
-def not_equals(iterable: Iterable, value: Value) -> Iterable:
-    yield from (i for i in iterable if i != value)
+def field_getter(obj, field_name):
+    return getattr(obj, field_name, obj.get(field_name))
 
 
-def greater_than(iterable: Iterable, value: Value) -> Iterable:
-    yield from (i for i in iterable if i >= value)
+def attribute_getter():
+    pass
 
 
-def less_than(iterable: Iterable, value: Value) -> Iterable:
-    yield from (i for i in iterable if i <= value)
+def filter_function(iterable: Iterable, field_name: str, value: FilterValue, comparator: Callable) -> Iterable:
+    for i in iterable:
+        print(field_getter(i, field_name), value)
+    return [i for i in iterable if comparator(field_getter(i, field_name), value)]
 
 
-class FilterSet(OrderedDict):
-    def __init__(self, of_type: graphql.GraphQLScalarType, initial: dict, default_filter: str):
-        self.of_type = of_type
+equals = functools.partial(filter_function, comparator=operator.eq)
+not_equals = functools.partial(filter_function, comparator=operator.ne)
+
+
+class FilterSet(collections.OrderedDict):
+    def __init__(self, initial: dict, default_filter: str):
         super().__init__(initial)
         assert default_filter in self
         self.default_filter = default_filter
 
-    def apply_filter(self, collection: Iterable, filter_function: str) -> Iterable:
-        yield from self[filter_function](collection)
-
-    def apply(self, collection: Iterable, filter_functions: Iterable[str]) -> Iterable:
+    def apply(self, collection: Iterable, field_name: str, value: ast.Value) -> Iterable:
         new_collection = collection
-        for filter_function in filter_functions:
-            new_collection = self[filter_function](collection)
-        return new_collection
+        if isinstance(value, ast.ObjectValue):
+            print(value)
+        elif isinstance(value, ScalarValueTypes):
+            new_collection = self[self.default_filter](new_collection, field_name, value.value)
+        else:
+            raise NotImplementedError(f'Unsupported Value type: {repr(value)}')
+        return list(new_collection)
 
-    @property
-    def fields(self) -> Dict[str, graphql.GraphQLField]:
-        return {key: graphql.GraphQLInputObjectField(self.of_type) for key in self}
 
-
-IntegerFilterSet = FilterSet(graphql.GraphQLInt, {
-    'e': equals,
+IntegerFilterSet = FilterSet({
+    'eq': equals,
     'ne': not_equals,
-    'gt': greater_than,
-    'lt': less_than,
-}, 'e')
+}, 'eq')
 
-StringFilterSet = FilterSet(graphql.GraphQLString, {
-    'e': equals,
+StringFilterSet = FilterSet({
+    'eq': equals,
     'ne': not_equals,
-}, 'e')
+}, 'eq')
+
+IDFilterSet = FilterSet({
+    'eq': equals,
+}, 'eq')
 
 
 def get_filter_fields(of_type: graphql.GraphQLScalarType) -> Dict[str, graphql.GraphQLField]:
-    if of_type == graphql.GraphQLString:
-        return StringFilterSet.fields
+    if of_type == graphql.GraphQLID:
+        return IDFilterSet
+    elif of_type == graphql.GraphQLString:
+        return StringFilterSet
     elif of_type == graphql.GraphQLInt:
-        return IntegerFilterSet.fields
+        return IntegerFilterSet
     return {}

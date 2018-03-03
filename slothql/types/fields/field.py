@@ -30,19 +30,18 @@ class Field(LazyInitMixin, ListMixin, graphql.GraphQLField):
         self.source = source
 
         args = of_type.args() if isinstance(of_type, types.Object) else {}
+        super().__init__(type=of_type._type, resolver=functools.partial(self.resolve, resolver), args=args, **kwargs)
+        
         self.filters = of_type.filters() if isinstance(of_type, types.Object) else {}
 
-        super().__init__(type=of_type._type, resolver=functools.partial(self.resolve, resolver), args=args, **kwargs)
-
-    @classmethod
-    def apply_filters(cls, resolved, args: dict):
-        for field_name, filters in args:
-            raise NotImplementedError
+    def apply_filters(self, resolved, args: dict):
+        for field_name, value in args.items():
+            filter_set = self.filters[field_name]
+            resolved = filter_set.apply(resolved, field_name, value)
         return resolved
 
-    @classmethod
-    def resolve(cls, resolver: Resolver, obj, info: graphql.ResolveInfo, **kwargs):
-        return cls.apply_filters(resolver(obj, info, kwargs), kwargs)
+    def resolve(self, resolver: Resolver, obj, info: graphql.ResolveInfo, **kwargs):
+        return self.apply_filters(resolver(obj, info, kwargs), kwargs)
 
     def __repr__(self) -> str:
         return f'<Field: {repr(self.type)}>'
