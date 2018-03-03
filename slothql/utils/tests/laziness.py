@@ -1,6 +1,6 @@
 import pytest
 
-from ..laziness import LazyInitMixin, LazyInitProxy
+from ..laziness import LazyInitMixin
 
 
 class Executed(Exception):
