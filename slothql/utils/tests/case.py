@@ -1,6 +1,6 @@
 import pytest
 
-from ..camelcase import snake_to_camelcase
+from ..case import snake_to_camelcase
 
 
 @pytest.mark.parametrize('value, expected', (
