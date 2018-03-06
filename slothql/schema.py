@@ -1,7 +1,6 @@
 import graphql
 
-from .utils import snake_to_camelcase
-
+from slothql.utils import snake_to_camelcase
 from .types.base import LazyType, resolve_lazy_type
 
 

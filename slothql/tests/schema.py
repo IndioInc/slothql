@@ -42,6 +42,7 @@ class TestSchema:
 
 def test_schema_camelcase_integration__queries():
     class FooBar(slothql.Object):
+        foo_bar = slothql.Field(lambda: FooBar, resolver=lambda: {})
         some_weird_field = slothql.String(resolver=lambda: 'some weird field')
 
     class Query(slothql.Object):

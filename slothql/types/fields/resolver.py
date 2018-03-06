@@ -1,3 +1,4 @@
+import inspect
 import functools
 from typing import Callable, Dict, Optional, Any
 
@@ -42,3 +43,7 @@ def _inject_missing_args(func: PartialResolver) -> Resolver:
 def get_resolver(field, resolver: PartialResolver) -> Resolver:
     func = _get_function(field, resolver)
     return func and _inject_missing_args(func)
+
+
+def is_valid_resolver(resolver: PartialResolver) -> bool:
+    return inspect.isfunction(resolver) or isinstance(resolver, (classmethod, staticmethod))
