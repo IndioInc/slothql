@@ -2,13 +2,13 @@ import functools
 
 import graphql
 
-from slothql.arguments.utils import parse_argument
-from slothql.utils import LazyInitMixin
 from slothql import types
+from slothql.utils import LazyInitMixin
+from slothql.arguments.utils import parse_argument
 from slothql.types.base import LazyType, resolve_lazy_type, BaseType
 
 from .mixins import ListMixin
-from .resolver import get_resolver, Resolver, PartialResolver, ResolveArgs
+from .resolver import get_resolver, Resolver, PartialResolver, ResolveArgs, is_valid_resolver
 
 
 class Field(LazyInitMixin, ListMixin, graphql.GraphQLField):
@@ -23,6 +23,7 @@ class Field(LazyInitMixin, ListMixin, graphql.GraphQLField):
         return get_resolver(self, resolver) or self.get_default_resolver(of_type)
 
     def __init__(self, of_type: LazyType, resolver: PartialResolver = None, source: str = None, **kwargs):
+        assert resolver is None or is_valid_resolver(resolver), f'Resolver has to be callable, but got {resolver}'
         of_type = resolve_lazy_type(of_type)
         resolver = self.get_resolver(resolver, of_type)
         assert callable(resolver), f'resolver needs to be callable, not {resolver}'

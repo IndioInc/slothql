@@ -13,7 +13,7 @@ def test_circular_dependency():
     class Query(slothql.Object):
         root = slothql.Field(A, resolver=lambda: {'b': {'a': {'field': 'foo'}}})
 
-    schema = slothql.Schema(Query)
+    schema = slothql.Schema(query=Query)
 
     query = 'query { root { b { a { field } } } }'
     assert {'data': {'root': {'b': {'a': {'field': 'foo'}}}}} == slothql.gql(schema, query)
