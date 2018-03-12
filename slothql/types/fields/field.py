@@ -1,5 +1,7 @@
 import functools
 
+from cached_property import cached_property
+
 import graphql
 
 from slothql import types
@@ -7,13 +9,10 @@ from slothql.utils import LazyInitMixin
 from slothql.arguments.utils import parse_argument
 from slothql.types.base import LazyType, resolve_lazy_type, BaseType
 
-from .mixins import ListMixin
 from .resolver import get_resolver, Resolver, PartialResolver, ResolveArgs, is_valid_resolver
 
 
-class Field(LazyInitMixin, ListMixin, graphql.GraphQLField):
-    __slots__ = ()
-
+class Field(LazyInitMixin):
     def get_default_resolver(self, of_type: BaseType) -> Resolver:
         if isinstance(of_type, types.Object):
             return lambda obj, info, args: of_type.resolve(self.resolve_field(obj, info, args), info, args)
@@ -23,25 +22,37 @@ class Field(LazyInitMixin, ListMixin, graphql.GraphQLField):
         return get_resolver(self, resolver) or self.get_default_resolver(of_type)
 
     def __init__(self, of_type: LazyType, resolver: PartialResolver = None, source: str = None, **kwargs):
+        self._type = of_type
+
         assert resolver is None or is_valid_resolver(resolver), f'Resolver has to be callable, but got {resolver}'
-        of_type = resolve_lazy_type(of_type)
-        resolver = self.get_resolver(resolver, of_type)
-        assert callable(resolver), f'resolver needs to be callable, not {resolver}'
+        self._resolver = resolver
 
         assert source is None or isinstance(source, str), f'source= has to be of type str'
         self.source = source
 
-        args = of_type.args() if isinstance(of_type, types.Object) else {}
+        self.many = kwargs.pop('many', False)
+        assert isinstance(self.many, bool), f'many has to be of type bool, not {self.many}'
 
-        super().__init__(
-            type=of_type._type,
-            resolver=functools.partial(self.resolve, resolver),
-            args=args,
-            **kwargs
-        )
-        self.of_type = of_type
+    @cached_property
+    def of_type(self) -> BaseType:
+        resolved_type = resolve_lazy_type(self._type)
+        assert isinstance(resolved_type, BaseType), \
+            f'{self} "of_type" needs to be of type BaseType, not {resolved_type}'
+        return resolved_type
 
-        self.filters = of_type.filters() if isinstance(of_type, types.Object) else {}
+    @cached_property
+    def resolver(self) -> Resolver:
+        resolver = self.get_resolver(self._resolver, self.of_type)
+        assert callable(resolver), f'resolver needs to be callable, not {resolver}'
+        return functools.partial(self.resolve, resolver)
+
+    @cached_property
+    def args(self) -> dict:
+        return self.of_type.args() if isinstance(self.of_type, types.Object) else {}
+
+    @cached_property
+    def filters(self) -> dict:
+        return self.of_type.filters() if isinstance(self.of_type, types.Object) else {}
 
     def apply_filters(self, resolved, args: dict):
         for field_name, value in args.items():

@@ -18,7 +18,7 @@ from .. import scalars
         (scalars.IDType, 'description', graphql.GraphQLID.description),
 ))
 def test_scalar_type_props(scalar_type, name, value):
-    assert value == getattr(scalar_type()._type, name)
+    assert value == getattr(scalar_type()._meta, name)
 
 
 @pytest.mark.xfail

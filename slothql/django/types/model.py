@@ -14,8 +14,8 @@ from .registry import TypeRegistry
 class ModelOptions(ObjectOptions):
     __slots__ = 'model',
 
-    def __init__(self, attrs: dict):
-        super().__init__(attrs)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         assert self.abstract or self.model, f'"model" is required for object ModelOptions'
 
 

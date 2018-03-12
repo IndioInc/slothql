@@ -1,8 +1,6 @@
 import inspect
 from typing import Union, Type, Callable, Tuple, Iterable
 
-from graphql.type.definition import GraphQLType
-
 from slothql.utils import is_magic_name, get_attr_fields
 from slothql.utils.singleton import Singleton
 
@@ -15,9 +13,9 @@ class TypeOptions:
             if not hasattr(self, name):
                 setattr(self, name, None)
 
-    def __init__(self, attrs: dict):
+    def __init__(self, **kwargs):
         self.set_defaults()
-        for name, value in attrs.items():
+        for name, value in kwargs.items():
             try:
                 setattr(self, name, value)
             except AttributeError:
@@ -30,7 +28,9 @@ class TypeMeta(Singleton):
         assert 'Meta' not in attrs or inspect.isclass(attrs['Meta']), 'attribute Meta has to be a class'
         meta_attrs = get_attr_fields(attrs['Meta']) if 'Meta' in attrs else {}
         base_option = mcs.merge_options(*mcs.get_options_bases(bases))
-        meta = options_class(mcs.merge_options(base_option, mcs.get_option_attrs(name, base_option, attrs, meta_attrs)))
+        meta = options_class(
+            **mcs.merge_options(base_option, mcs.get_option_attrs(name, base_option, attrs, meta_attrs)),
+        )
         cls = super().__new__(mcs, name, bases, attrs)
         cls._meta = meta
         return cls
@@ -70,13 +70,6 @@ class BaseType(metaclass=TypeMeta):
     def __new__(cls, *more):
         assert not cls._meta.abstract, f'Abstract type {cls.__name__} can not be instantiated'
         return super().__new__(cls)
-
-    def __init__(self, type_: GraphQLType):
-        self._type = type_
-
-    @classmethod
-    def get_output_type(cls) -> GraphQLType:
-        raise NotImplementedError
 
 
 LazyType = Union[Type[BaseType], BaseType, Callable]

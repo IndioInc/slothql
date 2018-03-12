@@ -54,8 +54,8 @@ def test_camelcase_schema_integration__queries():
         == slothql.gql(schema, 'query { stringField fooBar { someWeirdField } }')
 
     # shouldn't modify the actual types
-    assert {'string_field', 'foo_bar'} == Query()._type.fields.keys() == Query()._type._fields.keys()
-    assert {'some_weird_field', 'foo_bar'} == FooBar()._type.fields.keys() == FooBar()._type._fields.keys()
+    assert {'string_field', 'foo_bar'} == Query()._meta.fields.keys()
+    assert {'some_weird_field', 'foo_bar'} == FooBar()._meta.fields.keys()
 
 
 def test_camelcase_schema_integration__introspection_query():

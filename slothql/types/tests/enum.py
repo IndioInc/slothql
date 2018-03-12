@@ -17,4 +17,9 @@ def test_enum_declaration():
         UNKNOWN = EnumValue(value='3', description='nobody knows')
 
     assert {'MALE': (True, 'lads'), 'FEMALE': (2.0, 'gals'), 'UNKNOWN': ('3', 'nobody knows')} \
-        == {v.name: (v.value, v.description) for v in Gender()._type.values}
+        == {name: (value.value, value.description) for name, value in Gender()._meta.enum_values.items()}
+
+
+@pytest.mark.xfail(reason='not written yet')
+def test_enum_integration():
+    pass

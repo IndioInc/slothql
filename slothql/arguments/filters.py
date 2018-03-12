@@ -1,9 +1,10 @@
 import operator
 import functools
-from typing import Iterable, Callable, Dict, Union
+from typing import Iterable, Callable, Union, Optional
 
-import graphql
 from graphql.language import ast
+
+from slothql.types import scalars
 
 Filter = Callable[[Iterable, ast.Value], Iterable]
 FilterValue = Union[int, str, bool, list]
@@ -57,11 +58,11 @@ IDFilterSet = FilterSet({
 }, 'eq')
 
 
-def get_filter_fields(of_type: graphql.GraphQLScalarType) -> Dict[str, graphql.GraphQLField]:
-    if of_type == graphql.GraphQLID:
+def get_filter_fields(scalar_type: scalars.ScalarType) -> Optional[FilterSet]:
+    if isinstance(scalar_type, scalars.IDType):
         return IDFilterSet
-    elif of_type == graphql.GraphQLString:
+    elif isinstance(scalar_type, scalars.StringType):
         return StringFilterSet
-    elif of_type == graphql.GraphQLInt:
+    elif isinstance(scalar_type, scalars.IntegerType):
         return IntegerFilterSet
-    return {}
+    return None

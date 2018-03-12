@@ -36,6 +36,8 @@ def test_lazy_init_isinstance():
     assert isinstance(Class(), Class)
 
 
-@pytest.mark.xfail
 def test_lazy_init_type():
-    assert type(Class()) is Class
+    """
+    type() behaviour cannot be modified
+    """
+    assert type(Class()) is not Class
