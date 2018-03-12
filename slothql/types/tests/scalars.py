@@ -2,6 +2,8 @@ import pytest
 
 import graphql
 
+import slothql
+
 from .. import scalars
 
 
@@ -19,6 +21,24 @@ from .. import scalars
 ))
 def test_scalar_type_props(scalar_type, name, value):
     assert value == getattr(scalar_type()._meta, name)
+
+
+def test_scalar_integration():
+    class Foo(slothql.Object):
+        integer = slothql.Integer()
+        boolean = slothql.Boolean()
+        float = slothql.Float()
+        id = slothql.ID()
+        string = slothql.String()
+
+    data = {'integer': 12, 'boolean': True, 'float': 12.34, 'id': 'guid', 'string': 'foo bar'}
+
+    class Query(slothql.Object):
+        foo = slothql.Field(Foo, resolver=lambda: data)
+
+    schema = slothql.Schema(query=Query)
+
+    assert {'data': {'foo': data}} == slothql.gql(schema, 'query { foo { integer boolean float id string } }')
 
 
 @pytest.mark.xfail

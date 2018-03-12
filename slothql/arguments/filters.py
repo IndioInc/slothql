@@ -65,4 +65,4 @@ def get_filter_fields(scalar_type: scalars.ScalarType) -> Optional[FilterSet]:
         return StringFilterSet
     elif isinstance(scalar_type, scalars.IntegerType):
         return IntegerFilterSet
-    return None
+    raise NotImplementedError()
