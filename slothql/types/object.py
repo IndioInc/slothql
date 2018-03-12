@@ -33,11 +33,15 @@ class ObjectMeta(TypeMeta):
 
 
 class Object(BaseType, metaclass=ObjectMeta):
-    def __init__(self, **kwargs):
-        super().__init__(graphql.GraphQLObjectType(name=self.__class__.__name__, fields=self._meta.fields, **kwargs))
+    def __init__(self):
+        super().__init__(graphql.GraphQLObjectType(name=self.__class__.__name__, fields=self._meta.fields))
 
     class Meta:
         abstract = True
+
+    @classmethod
+    def get_output_type(cls) -> graphql.GraphQLObjectType:
+        return graphql.GraphQLObjectType(name=cls.__name__, fields=cls._meta.fields)
 
     @classmethod
     def resolve(cls, parent, info: graphql.ResolveInfo, args: dict):

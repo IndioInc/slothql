@@ -74,6 +74,10 @@ class BaseType(metaclass=TypeMeta):
     def __init__(self, type_: GraphQLType):
         self._type = type_
 
+    @classmethod
+    def get_output_type(cls) -> GraphQLType:
+        raise NotImplementedError
+
 
 LazyType = Union[Type[BaseType], BaseType, Callable]
 

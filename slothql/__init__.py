@@ -1,5 +1,5 @@
 from .types.fields import Field, Integer, Float, String, Boolean, ID, JsonString, DateTime, Date, Time
-from .types import Object, Enum, EnumValue
+from .types import BaseType, Object, Enum, EnumValue
 from .schema import Schema
 from .query import gql
 
@@ -11,6 +11,7 @@ __all__ = (
     'DateTime', 'Date', 'Time',
 
     # types
+    'BaseType',
     'Object',
     'Enum', 'EnumValue',
 

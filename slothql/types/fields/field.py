@@ -32,7 +32,14 @@ class Field(LazyInitMixin, ListMixin, graphql.GraphQLField):
         self.source = source
 
         args = of_type.args() if isinstance(of_type, types.Object) else {}
-        super().__init__(type=of_type._type, resolver=functools.partial(self.resolve, resolver), args=args, **kwargs)
+
+        super().__init__(
+            type=of_type._type,
+            resolver=functools.partial(self.resolve, resolver),
+            args=args,
+            **kwargs
+        )
+        self.of_type = of_type
 
         self.filters = of_type.filters() if isinstance(of_type, types.Object) else {}
 
