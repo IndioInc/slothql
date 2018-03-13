@@ -19,7 +19,6 @@ def test_filtering(query, expected):
     assert {'data': {'foos': expected}} == slothql.gql(slothql.Schema(query=Query), query)
 
 
-@pytest.mark.xfail(reason='Argument validation not implemented')
 def test_invalid_filter():
     class Foo(slothql.Object):
         id = slothql.ID()
@@ -27,4 +26,5 @@ def test_invalid_filter():
     class Query(slothql.Object):
         foos = slothql.Field(Foo, many=True)
 
-    assert {'errors': []} == slothql.gql(slothql.Schema(query=Query), 'query { foos(id: {wtf: 1}) { id } }')
+    error = {'message': 'Argument "id" has invalid value {wtf: 1}.\nExpected type "ID", found {wtf: 1}.'}
+    assert {'errors': [error]} == slothql.gql(slothql.Schema(query=Query), 'query { foos(id: {wtf: 1}) { id } }')

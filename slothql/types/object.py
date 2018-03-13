@@ -49,9 +49,5 @@ class Object(BaseType, metaclass=ObjectMeta):
         }
 
     @classmethod
-    def args(cls) -> Dict[str, graphql.GraphQLArgument]:
-        return {name: graphql.GraphQLArgument(graphql.GraphQLString) for name, of_type in cls._meta.fields.items()}
-
-    @classmethod
     def filters(cls) -> Dict[str, FilterSet]:
         return {name: get_filter_fields(field.of_type) for name, field in cls._meta.fields.items()}
