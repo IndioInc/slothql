@@ -5,7 +5,7 @@ from slothql.utils import is_magic_name, get_attr_fields
 from slothql.utils.singleton import Singleton
 
 
-class TypeOptions:
+class BaseOptions:
     __slots__ = 'abstract', 'name', 'description'
 
     def set_defaults(self):
@@ -22,9 +22,9 @@ class TypeOptions:
                 raise AttributeError(f'Meta received an unexpected attribute "{name} = {value}"')
 
 
-class TypeMeta(Singleton):
+class BaseMeta(Singleton):
     def __new__(mcs, name: str, bases: Tuple[type], attrs: dict,
-                options_class: Type[TypeOptions] = TypeOptions, **kwargs):
+                options_class: Type[BaseOptions] = BaseOptions, **kwargs):
         assert 'Meta' not in attrs or inspect.isclass(attrs['Meta']), 'attribute Meta has to be a class'
         meta_attrs = get_attr_fields(attrs['Meta']) if 'Meta' in attrs else {}
         base_option = mcs.merge_options(*mcs.get_options_bases(bases))
@@ -55,7 +55,7 @@ class TypeMeta(Singleton):
     def get_options_bases(mcs, bases: Tuple[type]) -> Iterable[dict]:
         yield from (
             get_attr_fields(base._meta)
-            for base in reversed(bases) if hasattr(base, '_meta') and isinstance(base._meta, TypeOptions)
+            for base in reversed(bases) if hasattr(base, '_meta') and isinstance(base._meta, BaseOptions)
         )
 
     @classmethod
@@ -65,7 +65,7 @@ class TypeMeta(Singleton):
         return new
 
 
-class BaseType(metaclass=TypeMeta):
+class BaseType(metaclass=BaseMeta):
     @staticmethod
     def __new__(cls, *more):
         assert not cls._meta.abstract, f'Abstract type {cls.__name__} can not be instantiated'

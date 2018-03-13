@@ -1,9 +1,9 @@
 from typing import Type
 
-from .base import BaseType, TypeMeta, TypeOptions
+from .base import BaseType, BaseMeta, BaseOptions
 
 
-class EnumOptions(TypeOptions):
+class EnumOptions(BaseOptions):
     __slots__ = 'enum_values',
 
     def __init__(self, **kwargs):
@@ -11,7 +11,7 @@ class EnumOptions(TypeOptions):
         assert self.abstract or self.enum_values, f'"{self.name}" is missing valid `Enum` values'
 
 
-class EnumMeta(TypeMeta):
+class EnumMeta(BaseMeta):
     def __new__(mcs, *args, options_class: Type[EnumOptions] = EnumOptions, **kwargs):
         return super().__new__(mcs, *args, options_class, **kwargs)
 

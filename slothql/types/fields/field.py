@@ -67,9 +67,8 @@ class Field:
         return resolved
 
     def resolve(self, resolver: Resolver, obj, info: graphql.ResolveInfo, **kwargs):
-        args = {name: value for name, value in kwargs.items()}
-        resolved = resolver(obj, info, args)
-        return self.apply_filters(resolved, args) if self.many else resolved
+        resolved = resolver(obj, info, kwargs)
+        return self.apply_filters(resolved, kwargs) if self.many else resolved
 
     def __repr__(self) -> str:
         return f'<Field: {repr(self.type)}>'
