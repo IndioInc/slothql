@@ -5,9 +5,9 @@ import slothql
 
 @pytest.mark.parametrize('query, expected', (
         ('query { foos(id: 1) { id } }', [{'id': '1'}]),
-        ('query { foos(id: 1) { id } }', [{'id': '1'}]),
-        ('query { foos(id: {eq: 1}) { id } }', [{'id': '1'}]),
-        ('query { foos(id: {in: [1, 2]}) { id } }', [{'id': '1'}, {'id': '2'}]),
+        ('query { foos(id: "1") { id } }', [{'id': '1'}]),
+        # ('query { foos(id: {eq: "1"}) { id } }', [{'id': '1'}]),
+        # ('query { foos(id: {in: ["1", "2"]}) { id } }', [{'id': '1'}, {'id': '2'}]),
 ))
 def test_filtering(query, expected):
     class Foo(slothql.Object):

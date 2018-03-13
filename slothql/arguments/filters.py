@@ -2,11 +2,8 @@ import operator
 import functools
 from typing import Iterable, Callable, Union, Optional
 
-from graphql.language import ast
-
 from slothql.types import scalars
 
-Filter = Callable[[Iterable, ast.Value], Iterable]
 FilterValue = Union[int, str, bool, list]
 
 

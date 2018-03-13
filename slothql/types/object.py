@@ -2,6 +2,7 @@ from typing import Type, Dict
 
 import graphql
 
+from slothql.types import scalars
 from slothql.arguments.filters import get_filter_fields
 from slothql.types.base import BaseType, TypeMeta, TypeOptions
 from slothql.types.fields import Field
@@ -39,6 +40,13 @@ class Object(BaseType, metaclass=ObjectMeta):
     @classmethod
     def resolve(cls, parent, info: graphql.ResolveInfo, args: dict):
         return parent
+
+    @classmethod
+    def filter_args(cls) -> Dict[str, Field]:
+        return {
+            name: Field(field.of_type)
+            for name, field in cls._meta.fields.items() if isinstance(field.of_type, scalars.ScalarType)
+        }
 
     @classmethod
     def args(cls) -> Dict[str, graphql.GraphQLArgument]:

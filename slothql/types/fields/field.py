@@ -5,14 +5,32 @@ from cached_property import cached_property
 import graphql
 
 from slothql import types
-from slothql.utils import LazyInitMixin
-from slothql.arguments.utils import parse_argument
 from slothql.types.base import LazyType, resolve_lazy_type, BaseType
 
 from .resolver import get_resolver, Resolver, PartialResolver, ResolveArgs, is_valid_resolver
 
 
-class Field(LazyInitMixin):
+class Field:
+    def __init__(self, of_type: LazyType, resolver: PartialResolver = None, description: str = None,
+                 source: str = None, many: bool = False, null: bool = True):
+        self._type = of_type
+
+        assert resolver is None or is_valid_resolver(resolver), f'Resolver has to be callable, but got {resolver}'
+        self._resolver = resolver
+
+        assert description is None or isinstance(description, str), \
+            f'description needs to be of type str, not {description}'
+        self.description = description
+
+        assert source is None or isinstance(source, str), f'source= has to be of type str, not {source}'
+        self.source = source
+
+        assert many is None or isinstance(many, bool), f'many= has to be of type bool, not {many}'
+        self.many = many
+
+        assert null is None or isinstance(null, bool), f'null= has to be of type bool, not {null}'
+        self.null = null
+
     def get_default_resolver(self, of_type: BaseType) -> Resolver:
         if isinstance(of_type, types.Object):
             return lambda obj, info, args: of_type.resolve(self.resolve_field(obj, info, args), info, args)
@@ -20,18 +38,6 @@ class Field(LazyInitMixin):
 
     def get_resolver(self, resolver: PartialResolver, of_type: BaseType) -> Resolver:
         return get_resolver(self, resolver) or self.get_default_resolver(of_type)
-
-    def __init__(self, of_type: LazyType, resolver: PartialResolver = None, source: str = None, **kwargs):
-        self._type = of_type
-
-        assert resolver is None or is_valid_resolver(resolver), f'Resolver has to be callable, but got {resolver}'
-        self._resolver = resolver
-
-        assert source is None or isinstance(source, str), f'source= has to be of type str'
-        self.source = source
-
-        self.many = kwargs.pop('many', False)
-        assert isinstance(self.many, bool), f'many has to be of type bool, not {self.many}'
 
     @cached_property
     def of_type(self) -> BaseType:
@@ -47,8 +53,8 @@ class Field(LazyInitMixin):
         return functools.partial(self.resolve, resolver)
 
     @cached_property
-    def args(self) -> dict:
-        return self.of_type.args() if isinstance(self.of_type, types.Object) else {}
+    def filter_args(self) -> dict:
+        return self.of_type.filter_args() if isinstance(self.of_type, types.Object) else {}
 
     @cached_property
     def filters(self) -> dict:
@@ -61,7 +67,7 @@ class Field(LazyInitMixin):
         return resolved
 
     def resolve(self, resolver: Resolver, obj, info: graphql.ResolveInfo, **kwargs):
-        args = {name: parse_argument(value) for name, value in kwargs.items()}
+        args = {name: value for name, value in kwargs.items()}
         resolved = resolver(obj, info, args)
         return self.apply_filters(resolved, args) if self.many else resolved
 

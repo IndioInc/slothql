@@ -8,6 +8,14 @@ class ScalarType(BaseType):
     def serialize(cls, value):
         return value
 
+    @classmethod
+    def parse(cls, value):
+        return value
+
+    @classmethod
+    def parse_literal(cls, value):
+        return value
+
 
 class IntegerType(ScalarType):
     class Meta:
@@ -42,9 +50,9 @@ class IDType(ScalarType):
 def patch_default_scalar(scalar_type: ScalarType, graphql_type: scalars.GraphQLScalarType):
     graphql_type.name = scalar_type._meta.name
     graphql_type.description = scalar_type._meta.description
-    graphql_type.serialize = scalar_type.serialize
-    graphql_type.parse_value = scalar_type.serialize
-    graphql_type.parse_literal = scalar_type.serialize
+    # graphql_type.serialize = scalar_type.serialize
+    # graphql_type.parse_value = scalar_type.parse
+    # graphql_type.parse_literal = scalar_type.parse_literal
 
 
 patch_default_scalar(IntegerType(), scalars.GraphQLInt)

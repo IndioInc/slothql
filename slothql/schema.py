@@ -79,10 +79,13 @@ class ProxyTypeMap(dict):
             graphql_type.fields = {
                 (snake_to_camelcase(name) if self.to_camelcase else name): graphql.GraphQLField(
                     type=self.get_type(field),
-                    args=field.args,
+                    args={
+                        (snake_to_camelcase(arg_name) if self.to_camelcase else arg_name): self.get_argument(arg_field)
+                        for arg_name, arg_field in field.filter_args.items()
+                    },
                     resolver=field.resolver,
                     deprecation_reason=None,
-                    description=None,
+                    description=field.description,
                 ) for name, field in of_type._meta.fields.items()
             }
             return graphql_type
@@ -97,6 +100,14 @@ class ProxyTypeMap(dict):
             graphql_type = graphql.GraphQLList(type=graphql_type)
         return graphql_type
 
+    def get_argument(self, field) -> graphql.GraphQLArgument:
+        return graphql.GraphQLArgument(
+            type=self.get_input_type(field.of_type),
+        )
+
+    def get_input_type(self, of_type):
+        return self.get_scalar_type(of_type)
+
 
 class Schema(graphql.GraphQLSchema):
     def __init__(self, query: LazyType, mutation=None, subscription=None, directives=None, types=None,
@@ -106,17 +117,14 @@ class Schema(graphql.GraphQLSchema):
         query = query and graphql_type_map[resolve_lazy_type(query)._meta.name]
         mutation = None
         assert isinstance(query, graphql.GraphQLObjectType), f'Schema query must be Object Type but got: {query}.'
-        if mutation:
-            assert isinstance(mutation, graphql.GraphQLObjectType), \
-                f'Schema mutation must be Object Type but got: {mutation}.'
+        assert mutation is None or isinstance(mutation, graphql.GraphQLObjectType), \
+            f'Schema mutation must be Object Type but got: {mutation}.'
 
-        if subscription:
-            assert isinstance(subscription, graphql.GraphQLObjectType), \
-                f'Schema subscription must be Object Type but got: {subscription}.'
+        assert subscription is None or isinstance(subscription, graphql.GraphQLObjectType), \
+            f'Schema subscription must be Object Type but got: {subscription}.'
 
-        if types:
-            assert isinstance(types, collections.Iterable), \
-                f'Schema types must be iterable if provided but got: {types}.'
+        assert types is None or isinstance(types, collections.Iterable), \
+            f'Schema types must be iterable if provided but got: {types}.'
 
         self._query = query
         self._mutation = mutation
