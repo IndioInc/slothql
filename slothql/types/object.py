@@ -1,7 +1,6 @@
 from typing import Type, Dict
 
-import graphql
-
+import slothql
 from slothql.types import scalars
 from slothql.arguments.filters import get_filter_fields, FilterSet
 
@@ -21,7 +20,9 @@ class ObjectMeta(BaseMeta):
     __slots__ = ()
 
     def __new__(mcs, name, bases, attrs: dict, options_class: Type[ObjectOptions] = ObjectOptions, **kwargs):
-        cls = super().__new__(mcs, name, bases, attrs, options_class, **kwargs)
+        cls: Type[Object] = super().__new__(mcs, name, bases, attrs, options_class, **kwargs)
+        if not hasattr(cls, 'is_type_of') or cls._meta.abstract and cls._meta.name is 'Object':
+            cls.is_type_of = None
         assert cls._meta.abstract or cls._meta.fields, \
             f'"{name}" has to provide some fields, or use "class Meta: abstract = True"'
         return cls
@@ -38,8 +39,16 @@ class Object(BaseType, metaclass=ObjectMeta):
         abstract = True
 
     @classmethod
-    def resolve(cls, parent, info: graphql.ResolveInfo, args: dict):
+    def resolve(cls, parent, info: slothql.ResolveInfo, args: dict):
         return parent
+
+    @classmethod
+    def is_type_of(cls, obj, info: slothql.ResolveInfo) -> bool:
+        """
+        This acts only as a template.
+        It will be overwritten to None by the metaclass, if not implemented
+        """
+        pass
 
     @classmethod
     def filter_args(cls) -> Dict[str, Field]:

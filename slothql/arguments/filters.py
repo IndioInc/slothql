@@ -30,9 +30,6 @@ class FilterSet(dict):
         new_collection = collection
         if isinstance(value, dict):
             for filter_func, filter_value in value.items():
-                if filter_func not in self:
-                    raise NotImplementedError(
-                        f'Invalid query function `{filter_func}`. Argument validation not implemented')
                 new_collection = self[filter_func](new_collection, field_name, filter_value)
         else:
             new_collection = self[self.default_filter](new_collection, field_name, value)

@@ -1,6 +1,6 @@
 import collections
 import functools
-from typing import Dict
+from typing import Dict, Callable
 
 import graphql
 from graphql.type import GraphQLEnumValue
@@ -67,12 +67,18 @@ class ProxyTypeMap(dict):
                 },
                 description=of_type._meta.description,
             )
+        elif isinstance(of_type, slothql.Union):
+            graphql_type = graphql.GraphQLUnionType(
+                name=of_type._meta.name,
+                types=[self.get_graphql_type(t()) for t in of_type._meta.union_types],
+                resolve_type=of_type.resolve_type and self.type_resolver(of_type.resolve_type),
+            )
         elif isinstance(of_type, slothql.Object):
             graphql_type = graphql.GraphQLObjectType(
                 name=of_type._meta.name,
                 fields={},
                 interfaces=None,
-                is_type_of=None,
+                is_type_of=of_type.is_type_of,
                 description=None,
             )
             self[graphql_type.name] = graphql_type
@@ -108,6 +114,14 @@ class ProxyTypeMap(dict):
     def get_input_type(self, of_type):
         return self.get_scalar_type(of_type)
 
+    def type_resolver(self, resolve_type: Callable) -> Callable:
+        @functools.wraps(resolve_type)
+        def wrapper(*args, **kwargs):
+            resolved_type: slothql.Object = resolve_type(*args, **kwargs)
+            return self[resolved_type._meta.name]
+
+        return wrapper
+
 
 class Schema(graphql.GraphQLSchema):
     def __init__(self, query: LazyType, mutation=None, subscription=None, directives=None, types=None,
@@ -137,9 +151,9 @@ class Schema(graphql.GraphQLSchema):
         self._directives = directives
 
         initial_types = [
-            query,
-            mutation,
-            subscription,
-            IntrospectionSchema,
-        ] + (types or [])
+                            query,
+                            mutation,
+                            subscription,
+                            IntrospectionSchema,
+                        ] + (types or [])
         self._type_map = GraphQLTypeMap(initial_types)

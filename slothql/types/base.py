@@ -76,8 +76,9 @@ LazyType = Union[Type[BaseType], BaseType, Callable]
 
 
 def resolve_lazy_type(lazy_type: LazyType) -> BaseType:
-    assert inspect.isclass(lazy_type) and issubclass(lazy_type, BaseType) or isinstance(lazy_type, BaseType) \
-           or inspect.isfunction(lazy_type), f'"lazy_type" needs to inherit from BaseType or be a lazy reference'
+    assert (inspect.isclass(lazy_type) and issubclass(lazy_type, BaseType) or isinstance(lazy_type, BaseType)
+            or inspect.isfunction(lazy_type)), \
+        f'"lazy_type" needs to inherit from BaseType or be a lazy reference, not {lazy_type}'
     of_type = lazy_type() if inspect.isfunction(lazy_type) else lazy_type
     of_type = of_type() if inspect.isclass(of_type) else of_type
     return of_type

@@ -1,9 +1,14 @@
+from graphql import ResolveInfo
+
 from .types.fields import Field, Integer, Float, String, Boolean, ID, JsonString, DateTime, Date, Time
 from .types import BaseType, Object, Enum, EnumValue, Union
 from .schema import Schema
 from .query import gql
 
 __all__ = (
+    # graphql
+    'ResolveInfo',
+
     # fields
     'Field',
     'Integer', 'Float', 'String', 'Boolean', 'ID',
