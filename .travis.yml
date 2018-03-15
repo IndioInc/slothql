@@ -8,4 +8,4 @@ script:
   - flake8 slothql
 after_success:
   - pip install coveralls
-  - coveralls
+  - coveralls --rcfile=tox.ini
