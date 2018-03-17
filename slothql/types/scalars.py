@@ -27,7 +27,7 @@ class IntegerType(ScalarType):
         if isinstance(value, int) and not isinstance(value, bool):
             if MIN_SAFE_INTEGER <= value <= MAX_SAFE_INTEGER:
                 return value
-        raise ValueError(f'`{cls.__name__}.serialize` received invalid value {repr(value)}')
+        raise TypeError(f'`{cls.__name__}.serialize` received invalid value {repr(value)}')
 
 
 class FloatType(ScalarType):
@@ -39,7 +39,7 @@ class FloatType(ScalarType):
     def serialize(cls, value) -> Optional[float]:
         if value is None or isinstance(value, float):
             return value
-        raise ValueError(f'`{cls.__name__}.serialize` received invalid value {repr(value)}')
+        raise TypeError(f'`{cls.__name__}.serialize` received invalid value {repr(value)}')
 
 
 class StringType(ScalarType):
@@ -51,7 +51,7 @@ class StringType(ScalarType):
     def serialize(cls, value) -> Optional[str]:
         if value is None or isinstance(value, str):
             return value
-        raise ValueError(f'`{cls.__name__}.serialize` received invalid value {repr(value)}')
+        raise TypeError(f'`{cls.__name__}.serialize` received invalid value {repr(value)}')
 
 
 class BooleanType(ScalarType):
@@ -63,7 +63,7 @@ class BooleanType(ScalarType):
     def serialize(cls, value) -> Optional[bool]:
         if value is None or isinstance(value, bool):
             return value
-        raise ValueError(f'`{cls.__name__}.serialize` received invalid value {repr(value)}')
+        raise TypeError(f'`{cls.__name__}.serialize` received invalid value {repr(value)}')
 
 
 class IDType(ScalarType):
@@ -77,8 +77,8 @@ class IDType(ScalarType):
             return value
         try:
             return IntegerType.serialize(value)
-        except ValueError:
-            raise ValueError(f'`{cls.__name__}.serialize` received invalid value {repr(value)}')
+        except TypeError:
+            raise TypeError(f'`{cls.__name__}.serialize` received invalid value {repr(value)}')
 
 
 def patch_default_scalar(scalar_type: ScalarType, graphql_type: scalars.GraphQLScalarType):

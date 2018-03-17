@@ -102,6 +102,6 @@ def test_serialize(scalar_type: Type[scalars.ScalarType], value, expected):
         (scalars.IDType, False),
 ))
 def test_serialize__invalid(scalar_type: Type[scalars.ScalarType], value):
-    with pytest.raises(ValueError) as exc_info:
+    with pytest.raises(TypeError) as exc_info:
         scalar_type.serialize(value)
     assert f'`{scalar_type.__name__}.serialize` received invalid value {repr(value)}' == str(exc_info.value)
