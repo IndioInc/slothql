@@ -11,7 +11,7 @@ class JsonStringType(StringType):
         if isinstance(value, set):
             return cls.replace_set_with_dict(list(value))
         elif isinstance(value, list):
-            return list(cls.replace_set_with_dict(i) for i in value)
+            return [cls.replace_set_with_dict(i) for i in value]
         elif isinstance(value, dict):
             return {k: cls.replace_set_with_dict(v) for k, v in value.items()}
         return value

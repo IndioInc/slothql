@@ -21,10 +21,10 @@ def test_serialize(value, expected):
 
 
 @pytest.mark.parametrize('value', (
-    object(),
-    [object()],
+        object(),
+        [object()],
 ))
-def test_serialize__invalid( value):
+def test_serialize__invalid(value):
     with pytest.raises(TypeError) as exc_info:
         JsonStringType.serialize(value)
     assert f'`{JsonStringType.__name__}.serialize` received invalid value {repr(value)}' == str(exc_info.value)

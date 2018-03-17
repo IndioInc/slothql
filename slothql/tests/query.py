@@ -38,4 +38,4 @@ def test_gql__exception_not_handled():
         hello = slothql.String(resolver=resolver)
 
     with pytest.raises(RuntimeError):
-        print(slothql.gql(slothql.Schema(query=Query), 'query { hello }'))
+        slothql.gql(slothql.Schema(query=Query), 'query { hello }')
