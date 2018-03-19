@@ -47,3 +47,19 @@ def test_multiple_operations():
         hello = slothql.String(resolver=lambda: 'world')
 
     slothql.gql(slothql.Schema(query=Query), query='query q1 { hello } query q2 { hello }')
+
+
+@pytest.mark.xfail
+def test_variables():
+    class Foo(slothql.Object):
+        bar = slothql.String()
+
+    class Query(slothql.Object):
+        def resolve_foo(self, obj, info, args):
+            print(obj, info, args)
+            return args
+
+        foo = slothql.Field(Foo, resolver=resolve_foo)
+
+    schema = slothql.Schema(query=Query)
+    assert {'foo': '1'} == slothql.gql(schema, 'query query($var: String) { foo(bar: $var) { bar } }', {'var': '1'})

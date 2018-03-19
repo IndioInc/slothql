@@ -29,13 +29,13 @@ def middleware(resolver, obj, info, **kwargs):
 
 
 class Query:
-    __slots__ = 'query', 'schema', 'ast', 'errors'
+    __slots__ = 'query', 'schema', 'variables', 'ast', 'errors'
 
-    def __init__(self, query: str, schema: slothql.Schema):
+    def __init__(self, query: str, schema: slothql.Schema, variables: dict = None):
         assert isinstance(query, str), f'Expected query string, got {query}'
         assert isinstance(schema, GraphQLSchema), f'schema has to be of type Schema, not {schema}'
 
-        self.query, self.schema = query, schema
+        self.query, self.schema, self.variables = query, schema, variables or {}
         self.ast, self.errors = self.get_ast(self.query, self.schema)
 
     @classmethod
@@ -49,7 +49,8 @@ class Query:
     def execute(self) -> ExecutionResult:
         if self.errors:
             return ExecutionResult(errors=[self.format_error(e) for e in self.errors])
-        return ExecutionResult(data=execute(self.schema, self.ast, middleware=[middleware]).data)
+        result = execute(self.schema, self.ast, middleware=[middleware])
+        return ExecutionResult(data=result.data)
 
     @classmethod
     def format_error(cls, error: Exception) -> dict:
@@ -58,5 +59,5 @@ class Query:
         return {'message': str(error)}
 
 
-def gql(schema: slothql.Schema, query: str) -> ExecutionResult:
-    return Query(query, schema).execute()
+def gql(schema: slothql.Schema, query: str, variables: dict = None) -> ExecutionResult:
+    return Query(query, schema, variables).execute()
