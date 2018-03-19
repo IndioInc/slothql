@@ -38,4 +38,12 @@ def test_gql__exception_not_handled():
         hello = slothql.String(resolver=resolver)
 
     with pytest.raises(RuntimeError):
-        slothql.gql(slothql.Schema(query=Query), 'query { hello }')
+        print(slothql.gql(slothql.Schema(query=Query), query='query { hello }'))
+
+
+@pytest.mark.xfail
+def test_multiple_operations():
+    class Query(slothql.Object):
+        hello = slothql.String(resolver=lambda: 'world')
+
+    slothql.gql(slothql.Schema(query=Query), query='query q1 { hello } query q2 { hello }')

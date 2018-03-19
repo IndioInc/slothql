@@ -21,6 +21,13 @@ class ExecutionResult(dict):
         return self.get('data')
 
 
+def middleware(resolver, obj, info, **kwargs):
+    """
+    example middleware
+    """
+    return resolver(obj, info, **kwargs)
+
+
 class Query:
     __slots__ = 'query', 'schema', 'ast', 'errors'
 
@@ -42,7 +49,7 @@ class Query:
     def execute(self) -> ExecutionResult:
         if self.errors:
             return ExecutionResult(errors=[self.format_error(e) for e in self.errors])
-        return ExecutionResult(data=execute(self.schema, self.ast).data)
+        return ExecutionResult(data=execute(self.schema, self.ast, middleware=[middleware]).data)
 
     @classmethod
     def format_error(cls, error: Exception) -> dict:
