@@ -12,7 +12,7 @@ from .registry import TypeRegistry
 
 
 class ModelOptions(ObjectOptions):
-    __slots__ = 'model',
+    __slots__ = ('model',)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

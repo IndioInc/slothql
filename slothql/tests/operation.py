@@ -1,6 +1,6 @@
 import pytest
 
-from ..query import query_from_raw_json
+from slothql.operation import Operation
 
 
 @pytest.mark.parametrize('query', (
@@ -9,7 +9,7 @@ from ..query import query_from_raw_json
 ))
 def test_raw_query_invalid_json(query):
     with pytest.raises(ValueError) as exc_info:
-        query_from_raw_json(query)
+        Operation.from_string(query)
     assert str(exc_info.value).startswith('Expecting ')
 
 
@@ -22,15 +22,15 @@ def test_raw_query_invalid_json(query):
 ))
 def test_raw_query__valid_json_invalid_type(query):
     with pytest.raises(ValueError) as exc_info:
-        query_from_raw_json(query)
+        Operation.from_string(query)
     assert str(exc_info.value) == 'GraphQL queries must a dictionary'
 
 
 def test_raw_query__valid_json_missing_query():
     with pytest.raises(ValueError) as exc_info:
-        query_from_raw_json('{"lol": "elo"}')
-    assert str(exc_info.value) == '"query" not not found in json object'
+        Operation.from_string('{"lol": "elo"}')
+    assert str(exc_info.value) == '"query" not found in json object'
 
 
 def test_raw_query__valid_query():
-    query_from_raw_json('{"query": "elo"}')
+    Operation.from_string('{"query": "elo"}')

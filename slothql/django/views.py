@@ -12,10 +12,10 @@ from django.http import HttpResponse, HttpResponseNotAllowed, HttpResponseBadReq
 
 from graphql.type.schema import GraphQLSchema
 
-from slothql import gql
+import slothql
 from slothql.template import get_template_string
 
-from .utils.request import get_query_from_request
+from .utils.request import get_operation_from_request
 
 
 class GraphQLView(View):
@@ -32,7 +32,7 @@ class GraphQLView(View):
             return HttpResponseNotAllowed(['GET', 'POST'], 'GraphQL supports only GET and POST requests.')
 
         try:
-            query = self.get_query()
+            query = self.get_operation()
         except ValidationError as e:
             return HttpResponseBadRequest(e.message)
 
@@ -45,14 +45,14 @@ class GraphQLView(View):
 
         return HttpResponse(content=result, status=status_code, content_type='application/json')
 
-    def get_query(self) -> str:
-        return get_query_from_request(self.request)
+    def get_operation(self) -> slothql.Operation:
+        return get_operation_from_request(self.request)
 
-    def execute_query(self, query: str) -> dict:
-        return gql(self.get_schema(), query)
+    def execute_operation(self, operation: slothql.Operation) -> dict:
+        return slothql.gql(schema=self.get_schema(), operation=operation)
 
-    def get_query_result(self, query: str) -> Tuple[Optional[str], int]:
-        result = self.execute_query(query)
+    def get_query_result(self, operation: slothql.Operation) -> Tuple[Optional[str], int]:
+        result = self.execute_operation(operation)
         return self.jsonify(result), 400 if 'errors' in result else 200
 
     @classmethod

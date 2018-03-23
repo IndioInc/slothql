@@ -29,14 +29,14 @@ def middleware(resolver, obj, info, **kwargs):
 
 
 class Query:
-    __slots__ = 'query', 'schema', 'variables', 'ast', 'errors'
+    __slots__ = 'schema', 'operation', 'ast', 'errors'
 
-    def __init__(self, query: str, schema: slothql.Schema, variables: dict = None):
-        assert isinstance(query, str), f'Expected query string, got {query}'
+    def __init__(self, schema: slothql.Schema, operation: slothql.Operation):
+        assert isinstance(operation.query, str), f'Expected query string, got {operation.query}'
         assert isinstance(schema, GraphQLSchema), f'schema has to be of type Schema, not {schema}'
 
-        self.query, self.schema, self.variables = query, schema, variables or {}
-        self.ast, self.errors = self.get_ast(self.query, self.schema)
+        self.schema, self.operation = schema, operation
+        self.ast, self.errors = self.get_ast(self.operation.query, self.schema)
 
     @classmethod
     def get_ast(cls, query, schema) -> Tuple[Any, List[GraphQLSyntaxError]]:
@@ -49,7 +49,13 @@ class Query:
     def execute(self) -> ExecutionResult:
         if self.errors:
             return ExecutionResult(errors=[self.format_error(e) for e in self.errors])
-        result = execute(self.schema, self.ast, middleware=[middleware])
+        result = execute(
+            schema=self.schema,
+            document_ast=self.ast,
+            variable_values=self.operation.variables,
+            operation_name=self.operation.operation_name,
+            middleware=[middleware],
+        )
         return ExecutionResult(data=result.data)
 
     @classmethod
@@ -59,5 +65,19 @@ class Query:
         return {'message': str(error)}
 
 
-def gql(schema: slothql.Schema, query: str, variables: dict = None) -> ExecutionResult:
-    return Query(query, schema, variables).execute()
+def gql(
+        schema: slothql.Schema,
+        query: str = None,
+        *,
+        variables: dict = None,
+        operation_name: str = None,
+        operation: slothql.Operation = None,
+) -> ExecutionResult:
+    if operation:
+        assert not query, 'Using "query" with "operation" is ambiguous'
+        assert not variables, 'Using "variables" with "operation" is ambiguous'
+        assert not operation_name, 'Using "operation_name" with "operation" is ambiguous'
+    else:
+        operation = slothql.Operation(query=query, variables=variables, operation_name=operation_name)
+
+    return Query(schema, operation).execute()

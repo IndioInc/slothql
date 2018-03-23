@@ -7,7 +7,7 @@ from .object import Object
 
 
 class UnionOptions(BaseOptions):
-    __slots__ = 'union_types',
+    __slots__ = ('union_types',)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

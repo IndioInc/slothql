@@ -4,7 +4,7 @@ from .base import BaseType, BaseMeta, BaseOptions
 
 
 class EnumOptions(BaseOptions):
-    __slots__ = 'enum_values',
+    __slots__ = ('enum_values',)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
