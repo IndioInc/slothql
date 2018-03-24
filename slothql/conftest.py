@@ -66,3 +66,13 @@ def manager_mock():
 @pytest.fixture()
 def queryset_mock():
     return mock.Mock(spec=models.QuerySet)
+
+
+@pytest.fixture()
+def schema_mock():
+    return mock.Mock(spec=slothql.Schema)
+
+
+@pytest.fixture()
+def operation_mock():
+    return mock.Mock(spec=slothql.Operation, query='foo', variables={}, operation_name='baz')

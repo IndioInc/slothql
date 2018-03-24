@@ -9,10 +9,6 @@ import slothql
 
 class ExecutionResult(dict):
     @property
-    def invalid(self) -> bool:
-        return bool(self.get('errors'))
-
-    @property
     def errors(self) -> Optional[list]:
         return self.get('errors', [])
 
