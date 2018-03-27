@@ -76,3 +76,11 @@ def schema_mock():
 @pytest.fixture()
 def operation_mock():
     return mock.Mock(spec=slothql.Operation, query='foo', variables={}, operation_name='baz')
+
+
+@pytest.fixture()
+def hello_schema():
+    class Query(slothql.Object):
+        hello = slothql.String(resolver=lambda: 'world')
+
+    return slothql.Schema(query=Query)
