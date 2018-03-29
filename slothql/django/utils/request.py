@@ -1,23 +1,22 @@
 from django.core.exceptions import ValidationError
 from django.core.handlers.wsgi import WSGIRequest
 
-from slothql import utils
+from slothql.operation import Operation, InvalidOperation
 
 
-def get_query_from_request(request: WSGIRequest) -> str:
+def get_operation_from_request(request: WSGIRequest) -> Operation:
     if request.method == 'GET':
-        return request.GET.get('query', '')
+        return Operation.from_dict(request.GET)
 
     if not request.content_type:
         raise ValidationError('content-type not specified')
 
-    if request.content_type == 'application/graphql':
-        return request.body.decode()
-    elif request.content_type == 'application/json':
+    if request.content_type in ('application/x-www-form-urlencoded', 'multipart/form-data'):
+        return Operation.from_dict(request.POST)
+
+    if request.content_type in ('application/graphql', 'application/json'):
         try:
-            return utils.query_from_raw_json(request.body.decode('utf-8'))
-        except ValueError as e:
+            return Operation.from_string(request.body.decode())
+        except InvalidOperation as e:
             raise ValidationError(str(e))
-    elif request.content_type in ('application/x-www-form-urlencoded', 'multipart/form-data'):
-        return request.POST.get('query', '')
     raise ValidationError(f'Unsupported content-type {request.content_type}')

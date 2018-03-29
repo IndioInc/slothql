@@ -14,4 +14,4 @@ import slothql
         slothql.Time,
 ))
 def test_field_init(field):
-    assert field().type
+    assert field()._type

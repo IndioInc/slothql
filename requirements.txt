@@ -1,4 +1,5 @@
 graphql-core>=2<3
+cached-property==1.4
 
 # optional
 django>=2.0<3
@@ -12,3 +13,4 @@ pytest-django
 flake8
 flake8-comprehensions
 flake8-commas
+flake8-quotes

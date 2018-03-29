@@ -1,33 +1,62 @@
+from typing import List, Tuple, Any, Optional
+
 from graphql import Source, parse, validate, GraphQLSchema
 from graphql.error import format_error, GraphQLSyntaxError
-from graphql.execution import execute, ExecutionResult
+from graphql import execute
 
 import slothql
 
 
-class QueryExecutor:
-    def __init__(self, schema: GraphQLSchema) -> None:
-        self.schema = schema
-        assert isinstance(schema, GraphQLSchema), f'schema has to be of type GraphQLSchema, not {self.schema}'
+class ExecutionResult(dict):
+    @property
+    def errors(self) -> Optional[list]:
+        return self.get('errors', [])
 
-    def query(self, query: str) -> dict:
-        assert isinstance(query, str), f'Expected query string, got {query}'
+    @property
+    def data(self):
+        return self.get('data')
 
-        result = self.execute_query(query)
-        if result.invalid:
-            return {'errors': [self.format_error(error) for error in result.errors]}
-        return {'data': result.data}
+    @property
+    def valid(self) -> bool:
+        return 'errors' not in self
 
-    def execute_query(self, query: str) -> ExecutionResult:
+
+def middleware(resolver, obj, info, **kwargs):
+    """
+    example middleware
+    """
+    return resolver(obj, info, **kwargs)
+
+
+class Query:
+    __slots__ = 'schema', 'operation', 'ast', 'errors'
+
+    def __init__(self, schema: slothql.Schema, operation: slothql.Operation):
+        assert isinstance(operation.query, str), f'Expected query string, got {operation.query}'
+        assert isinstance(schema, GraphQLSchema), f'schema has to be of type Schema, not {schema}'
+
+        self.schema, self.operation = schema, operation
+        self.ast, self.errors = self.get_ast(self.operation.query, self.schema)
+
+    @classmethod
+    def get_ast(cls, query, schema) -> Tuple[Any, List[GraphQLSyntaxError]]:
         try:
-            ast = get_ast(query)
+            ast = parse(Source(query))
         except GraphQLSyntaxError as e:
-            return ExecutionResult(errors=[e], invalid=True)
+            return None, [e]
+        return ast, validate(schema, ast)
 
-        validation_errors = validate(self.schema, ast)
-        if validation_errors:
-            return ExecutionResult(errors=validation_errors, invalid=True)
-        return execute(self.schema, ast)
+    def execute(self) -> ExecutionResult:
+        if self.errors:
+            return ExecutionResult(errors=[self.format_error(e) for e in self.errors])
+        result = execute(
+            schema=self.schema,
+            document_ast=self.ast,
+            variable_values=self.operation.variables,
+            operation_name=self.operation.operation_name,
+            middleware=[middleware],
+        )
+        return ExecutionResult(data=result.data)
 
     @classmethod
     def format_error(cls, error: Exception) -> dict:
@@ -36,9 +65,19 @@ class QueryExecutor:
         return {'message': str(error)}
 
 
-def get_ast(query: str):
-    return parse(Source(query))
+def gql(
+        schema: slothql.Schema,
+        query: str = None,
+        *,
+        variables: dict = None,
+        operation_name: str = None,
+        operation: slothql.Operation = None,
+) -> ExecutionResult:
+    if operation:
+        assert not query, 'Using "query" with "operation" is ambiguous'
+        assert not variables, 'Using "variables" with "operation" is ambiguous'
+        assert not operation_name, 'Using "operation_name" with "operation" is ambiguous'
+    else:
+        operation = slothql.Operation(query=query, variables=variables, operation_name=operation_name)
 
-
-def gql(schema: slothql.Schema, query: str) -> dict:
-    return QueryExecutor(schema).query(query)
+    return Query(schema, operation).execute()

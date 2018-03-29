@@ -1,81 +1,144 @@
 import collections
-from typing import Dict
+import functools
+from typing import Dict, Callable
 
 import graphql
+from graphql.type import GraphQLEnumValue
+from graphql.type.definition import GraphQLType
 from graphql.type.introspection import IntrospectionSchema
 from graphql.type.typemap import GraphQLTypeMap
 
+import slothql
+from slothql.types import scalars
 from slothql.utils import snake_to_camelcase
 from .types.base import LazyType, resolve_lazy_type
 
 FieldMap = Dict[str, graphql.GraphQLField]
 
 
-class CamelCaseTypeMap(GraphQLTypeMap):
-    # FIXME: this is a really bad workaround, needs to be fixed ASAP
-    _type_map = {}
+class TypeMap(dict):
+    def __init__(self, *types: slothql.BaseType):
+        super().__init__(functools.reduce(self.type_reducer, types, {}))
 
-    def __init__(self, types):
-        self.__class__._type_map = {}
-        super().__init__(types)
-
-    @classmethod
-    def reducer(cls, type_map: dict, of_type):
-        if of_type is None:
+    def type_reducer(self, type_map: dict, of_type: slothql.BaseType):
+        if of_type._meta.name in type_map:
+            assert type_map[of_type._meta.name] == of_type, \
+                f'Schema has to contain unique type names, but got multiple types of name `{of_type._meta.name}`'
             return type_map
-        return super().reducer(map=type_map, type=cls.get_graphql_type(of_type))
+        type_map[of_type._meta.name] = of_type
+        if isinstance(of_type, slothql.Object):
+            for field in of_type._meta.fields.values():
+                type_map = self.type_reducer(type_map, field.of_type)
+        return type_map
 
-    @classmethod
-    def get_graphql_type(cls, of_type):
-        if isinstance(of_type, (graphql.GraphQLNonNull, graphql.GraphQLList)):
-            return type(of_type)(type=cls.get_graphql_type(of_type.of_type))
-        if of_type.name in cls._type_map:
-            return cls._type_map[of_type.name]
-        if not of_type.name.startswith('__') and isinstance(of_type, graphql.GraphQLObjectType):
-            fields = of_type.fields
-            of_type = graphql.GraphQLObjectType(
-                name=of_type.name,
+
+class ProxyTypeMap(dict):
+    def __init__(self, type_map: TypeMap, to_camelcase: bool = False):
+        super().__init__()
+        self.to_camelcase = to_camelcase
+        for of_type in type_map.values():
+            self.get_graphql_type(of_type)
+
+    def get_scalar_type(self, of_type: scalars.ScalarType):
+        if isinstance(of_type, scalars.IDType):
+            return graphql.GraphQLID
+        elif isinstance(of_type, scalars.StringType):
+            return graphql.GraphQLString
+        elif isinstance(of_type, scalars.BooleanType):
+            return graphql.GraphQLBoolean
+        elif isinstance(of_type, scalars.IntegerType):
+            return graphql.GraphQLInt
+        elif isinstance(of_type, scalars.FloatType):
+            return graphql.GraphQLFloat
+        raise NotImplementedError(f'{of_type} conversion is not implemented')
+
+    def get_graphql_type(self, of_type: slothql.BaseType) -> GraphQLType:
+        if of_type._meta.name in self:
+            return self[of_type._meta.name]
+        elif isinstance(of_type, scalars.ScalarType):
+            graphql_type = self.get_scalar_type(of_type)
+        elif isinstance(of_type, slothql.Enum):
+            return graphql.GraphQLEnumType(
+                name=of_type._meta.name,
+                values={
+                    (snake_to_camelcase(name) if self.to_camelcase else name): GraphQLEnumValue(
+                        value=value.value, description=value.description)
+                    for name, value in of_type._meta.enum_values.items()
+                },
+                description=of_type._meta.description,
+            )
+        elif isinstance(of_type, slothql.Union):
+            graphql_type = graphql.GraphQLUnionType(
+                name=of_type._meta.name,
+                types=[self.get_graphql_type(t()) for t in of_type._meta.union_types],
+                resolve_type=of_type.resolve_type and self.type_resolver(of_type.resolve_type),
+            )
+        elif isinstance(of_type, slothql.Object):
+            graphql_type = graphql.GraphQLObjectType(
+                name=of_type._meta.name,
                 fields={},
-                interfaces=of_type.interfaces,
+                interfaces=None,
                 is_type_of=of_type.is_type_of,
-                description=of_type.description,
+                description=None,
             )
-            cls._type_map[of_type.name] = of_type
-            of_type.fields = cls.construct_fields(fields)
-            cls._type_map[of_type.name] = of_type
-        return of_type
+            self[graphql_type.name] = graphql_type
+            graphql_type.fields = {
+                (snake_to_camelcase(name) if self.to_camelcase else name): graphql.GraphQLField(
+                    type=self.get_type(field),
+                    args={
+                        (snake_to_camelcase(arg_name) if self.to_camelcase else arg_name): self.get_argument(arg_field)
+                        for arg_name, arg_field in field.filter_args.items()
+                    },
+                    resolver=field.resolver,
+                    deprecation_reason=None,
+                    description=field.description,
+                ) for name, field in of_type._meta.fields.items()
+            }
+            return graphql_type
+        else:
+            raise NotImplementedError(f'Unsupported type {of_type}')
+        self[graphql_type.name] = graphql_type
+        return graphql_type
 
-    @classmethod
-    def construct_fields(cls, fields: FieldMap) -> FieldMap:
-        return {
-            snake_to_camelcase(name): graphql.GraphQLField(
-                type=cls.get_graphql_type(field.type),
-                args={snake_to_camelcase(name): arg for name, arg in field.args.items()},
-                resolver=field.resolver,
-                deprecation_reason=field.deprecation_reason,
-                description=field.description,
-            )
-            for name, field in fields.items()
-        }
+    def get_type(self, field: slothql.Field):
+        graphql_type = self.get_graphql_type(field.of_type)
+        if field.many:
+            graphql_type = graphql.GraphQLList(type=graphql_type)
+        return graphql_type
+
+    def get_argument(self, field) -> graphql.GraphQLArgument:
+        return graphql.GraphQLArgument(
+            type=self.get_input_type(field.of_type),
+        )
+
+    def get_input_type(self, of_type):
+        return self.get_scalar_type(of_type)
+
+    def type_resolver(self, resolve_type: Callable) -> Callable:
+        @functools.wraps(resolve_type)
+        def wrapper(*args, **kwargs):
+            resolved_type: slothql.Object = resolve_type(*args, **kwargs)
+            return self[resolved_type._meta.name]
+
+        return wrapper
 
 
 class Schema(graphql.GraphQLSchema):
     def __init__(self, query: LazyType, mutation=None, subscription=None, directives=None, types=None,
                  auto_camelcase: bool = False):
-        query = resolve_lazy_type(query)._type
-
+        type_map = TypeMap(resolve_lazy_type(query))
+        graphql_type_map = ProxyTypeMap(type_map, to_camelcase=auto_camelcase)
+        query = query and graphql_type_map[resolve_lazy_type(query)._meta.name]
+        mutation = None
         assert isinstance(query, graphql.GraphQLObjectType), f'Schema query must be Object Type but got: {query}.'
-        if mutation:
-            assert isinstance(mutation, graphql.GraphQLObjectType), \
-                f'Schema mutation must be Object Type but got: {mutation}.'
+        assert mutation is None or isinstance(mutation, graphql.GraphQLObjectType), \
+            f'Schema mutation must be Object Type but got: {mutation}.'
 
-        if subscription:
-            assert isinstance(subscription, graphql.GraphQLObjectType), \
-                f'Schema subscription must be Object Type but got: {subscription}.'
+        assert subscription is None or isinstance(subscription, graphql.GraphQLObjectType), \
+            f'Schema subscription must be Object Type but got: {subscription}.'
 
-        if types:
-            assert isinstance(types, collections.Iterable), \
-                f'Schema types must be iterable if provided but got: {types}.'
+        assert types is None or isinstance(types, collections.Iterable), \
+            f'Schema types must be iterable if provided but got: {types}.'
 
         self._query = query
         self._mutation = mutation
@@ -88,12 +151,9 @@ class Schema(graphql.GraphQLSchema):
         self._directives = directives
 
         initial_types = [
-            query,
-            mutation,
-            subscription,
-            IntrospectionSchema,
-        ] + (types or [])
-        self._type_map = CamelCaseTypeMap(initial_types) if auto_camelcase else GraphQLTypeMap(initial_types)
-
-    def get_query_type(self):
-        return self._type_map[self._query.name]
+                            query,
+                            mutation,
+                            subscription,
+                            IntrospectionSchema,
+                        ] + (types or [])
+        self._type_map = GraphQLTypeMap(initial_types)

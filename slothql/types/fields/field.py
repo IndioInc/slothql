@@ -1,18 +1,35 @@
 import functools
 
+from cached_property import cached_property
+
 import graphql
 
 from slothql import types
-from slothql.utils import LazyInitMixin
-from slothql.arguments.utils import parse_argument
 from slothql.types.base import LazyType, resolve_lazy_type, BaseType
 
-from .mixins import ListMixin
 from .resolver import get_resolver, Resolver, PartialResolver, ResolveArgs, is_valid_resolver
 
 
-class Field(LazyInitMixin, ListMixin, graphql.GraphQLField):
-    __slots__ = ()
+class Field:
+    def __init__(self, of_type: LazyType, resolver: PartialResolver = None, description: str = None,
+                 source: str = None, many: bool = False, null: bool = True):
+        self._type = of_type
+
+        assert resolver is None or is_valid_resolver(resolver), f'Resolver has to be callable, but got {resolver}'
+        self._resolver = resolver
+
+        assert description is None or isinstance(description, str), \
+            f'description needs to be of type str, not {description}'
+        self.description = description
+
+        assert source is None or isinstance(source, str), f'source= has to be of type str, not {source}'
+        self.source = source
+
+        assert many is None or isinstance(many, bool), f'many= has to be of type bool, not {many}'
+        self.many = many
+
+        assert null is None or isinstance(null, bool), f'null= has to be of type bool, not {null}'
+        self.null = null
 
     def get_default_resolver(self, of_type: BaseType) -> Resolver:
         if isinstance(of_type, types.Object):
@@ -22,19 +39,26 @@ class Field(LazyInitMixin, ListMixin, graphql.GraphQLField):
     def get_resolver(self, resolver: PartialResolver, of_type: BaseType) -> Resolver:
         return get_resolver(self, resolver) or self.get_default_resolver(of_type)
 
-    def __init__(self, of_type: LazyType, resolver: PartialResolver = None, source: str = None, **kwargs):
-        assert resolver is None or is_valid_resolver(resolver), f'Resolver has to be callable, but got {resolver}'
-        of_type = resolve_lazy_type(of_type)
-        resolver = self.get_resolver(resolver, of_type)
+    @cached_property
+    def of_type(self) -> BaseType:
+        resolved_type = resolve_lazy_type(self._type)
+        assert isinstance(resolved_type, BaseType), \
+            f'{self} "of_type" needs to be of type BaseType, not {resolved_type}'
+        return resolved_type
+
+    @cached_property
+    def resolver(self) -> Resolver:
+        resolver = self.get_resolver(self._resolver, self.of_type)
         assert callable(resolver), f'resolver needs to be callable, not {resolver}'
+        return functools.partial(self.resolve, resolver)
 
-        assert source is None or isinstance(source, str), f'source= has to be of type str'
-        self.source = source
+    @cached_property
+    def filter_args(self) -> dict:
+        return self.of_type.filter_args() if isinstance(self.of_type, types.Object) else {}
 
-        args = of_type.args() if isinstance(of_type, types.Object) else {}
-        super().__init__(type=of_type._type, resolver=functools.partial(self.resolve, resolver), args=args, **kwargs)
-
-        self.filters = of_type.filters() if isinstance(of_type, types.Object) else {}
+    @cached_property
+    def filters(self) -> dict:
+        return self.of_type.filters() if isinstance(self.of_type, types.Object) else {}
 
     def apply_filters(self, resolved, args: dict):
         for field_name, value in args.items():
@@ -43,9 +67,8 @@ class Field(LazyInitMixin, ListMixin, graphql.GraphQLField):
         return resolved
 
     def resolve(self, resolver: Resolver, obj, info: graphql.ResolveInfo, **kwargs):
-        args = {name: parse_argument(value) for name, value in kwargs.items()}
-        resolved = resolver(obj, info, args)
-        return self.apply_filters(resolved, args) if self.many else resolved
+        resolved = resolver(obj, info, kwargs)
+        return self.apply_filters(resolved, kwargs) if self.many else resolved
 
     def __repr__(self) -> str:
         return f'<Field: {repr(self.type)}>'

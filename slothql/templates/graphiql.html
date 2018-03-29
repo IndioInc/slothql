@@ -127,9 +127,9 @@
     ReactDOM.render(
         React.createElement(GraphiQL, {
             fetcher: graphQLFetcher,
-            query: {% if query %}'{{ query|escapejs }}'{% else %}parameters.query{% endif %},
-            variables: {% if variables %}'{{ variables|escapejs }}'{% else %}parameters.variables{% endif %},
-            operationName: {% if operationName %}'{{ operationName|escapejs }}'{% else %}parameters.operationName{% endif %},
+            query: parameters.query,
+            variables: parameters.variables,
+            operationName: parameters.operationName,
             response: '{{ result|escapejs }}',
             onEditQuery: onEditQuery,
             onEditVariables: onEditVariables,

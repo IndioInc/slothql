@@ -1,6 +1,6 @@
 import inspect
 import functools
-from typing import Callable, Dict, Optional, Any
+from typing import Callable, Dict, Optional, Any, Union
 
 import graphql
 from graphql.language.ast import Value
@@ -8,11 +8,16 @@ from graphql.language.ast import Value
 from slothql.utils.functional import is_method, get_function_signature
 
 ResolveArgs = Dict[str, Value]
-PartialResolver = Callable[[Optional[Any], Optional[graphql.ResolveInfo], Optional[ResolveArgs]], Callable]
-Resolver = Callable[[Any, graphql.ResolveInfo, ResolveArgs], Callable]
+PartialResolver = Union[
+    Callable[[Any, graphql.ResolveInfo, ResolveArgs], Any],
+    Callable[[Any, graphql.ResolveInfo], Any],
+    Callable[[Any], Any],
+    Callable[[], Any],
+]
+Resolver = Callable[[Any, graphql.ResolveInfo, ResolveArgs], Any]
 
 
-def _get_function(field, resolver: PartialResolver = None) -> Optional[Resolver]:
+def _get_function(field, resolver: PartialResolver = None) -> Optional[PartialResolver]:
     if resolver is None:
         return None
     if isinstance(resolver, staticmethod):

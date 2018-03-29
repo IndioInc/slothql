@@ -1,13 +1,11 @@
 import inspect
 from typing import Union, Type, Callable, Tuple, Iterable
 
-from graphql.type.definition import GraphQLType
-
 from slothql.utils import is_magic_name, get_attr_fields
 from slothql.utils.singleton import Singleton
 
 
-class TypeOptions:
+class BaseOptions:
     __slots__ = 'abstract', 'name', 'description'
 
     def set_defaults(self):
@@ -15,22 +13,24 @@ class TypeOptions:
             if not hasattr(self, name):
                 setattr(self, name, None)
 
-    def __init__(self, attrs: dict):
+    def __init__(self, **kwargs):
         self.set_defaults()
-        for name, value in attrs.items():
+        for name, value in kwargs.items():
             try:
                 setattr(self, name, value)
             except AttributeError:
                 raise AttributeError(f'Meta received an unexpected attribute "{name} = {value}"')
 
 
-class TypeMeta(Singleton):
+class BaseMeta(Singleton):
     def __new__(mcs, name: str, bases: Tuple[type], attrs: dict,
-                options_class: Type[TypeOptions] = TypeOptions, **kwargs):
+                options_class: Type[BaseOptions] = BaseOptions, **kwargs):
         assert 'Meta' not in attrs or inspect.isclass(attrs['Meta']), 'attribute Meta has to be a class'
         meta_attrs = get_attr_fields(attrs['Meta']) if 'Meta' in attrs else {}
         base_option = mcs.merge_options(*mcs.get_options_bases(bases))
-        meta = options_class(mcs.merge_options(base_option, mcs.get_option_attrs(name, base_option, attrs, meta_attrs)))
+        meta = options_class(
+            **mcs.merge_options(base_option, mcs.get_option_attrs(name, base_option, attrs, meta_attrs)),
+        )
         cls = super().__new__(mcs, name, bases, attrs)
         cls._meta = meta
         return cls
@@ -55,7 +55,7 @@ class TypeMeta(Singleton):
     def get_options_bases(mcs, bases: Tuple[type]) -> Iterable[dict]:
         yield from (
             get_attr_fields(base._meta)
-            for base in reversed(bases) if hasattr(base, '_meta') and isinstance(base._meta, TypeOptions)
+            for base in reversed(bases) if hasattr(base, '_meta') and isinstance(base._meta, BaseOptions)
         )
 
     @classmethod
@@ -65,22 +65,20 @@ class TypeMeta(Singleton):
         return new
 
 
-class BaseType(metaclass=TypeMeta):
+class BaseType(metaclass=BaseMeta):
     @staticmethod
     def __new__(cls, *more):
         assert not cls._meta.abstract, f'Abstract type {cls.__name__} can not be instantiated'
         return super().__new__(cls)
-
-    def __init__(self, type_: GraphQLType):
-        self._type = type_
 
 
 LazyType = Union[Type[BaseType], BaseType, Callable]
 
 
 def resolve_lazy_type(lazy_type: LazyType) -> BaseType:
-    assert inspect.isclass(lazy_type) and issubclass(lazy_type, BaseType) or isinstance(lazy_type, BaseType) \
-           or inspect.isfunction(lazy_type), f'"lazy_type" needs to inherit from BaseType or be a lazy reference'
+    assert (inspect.isclass(lazy_type) and issubclass(lazy_type, BaseType) or isinstance(lazy_type, BaseType)
+            or inspect.isfunction(lazy_type)), \
+        f'"lazy_type" needs to inherit from BaseType or be a lazy reference, not {lazy_type}'
     of_type = lazy_type() if inspect.isfunction(lazy_type) else lazy_type
     of_type = of_type() if inspect.isclass(of_type) else of_type
     return of_type

@@ -50,7 +50,7 @@ class TestObjectInheritance:
         class Inherit(Object):
             field = field_mock
 
-        assert Inherit()._type.name == 'Inherit'
+        assert Inherit()._meta.name == 'Inherit'
 
     def test_abstract_inherit(self):
         class Inherit(Object):
@@ -88,12 +88,6 @@ class TestObjectFields:
                 abstract = True
 
         assert 'field' not in Inherit._meta.fields
-
-    def test_fields(self):
-        class Inherit(Object):
-            field = fields.Field(mock.Mock(spec=Object))
-
-        assert Inherit._meta.fields == Inherit()._type.fields
 
 
 def test_merge_object_options_dicts():
