@@ -9,7 +9,7 @@ from django.core.handlers.wsgi import WSGIRequest
 from django.test import RequestFactory
 
 import slothql
-from slothql.operation import OperationSyntaxError
+from slothql.operation import InvalidOperation
 
 from ..request import get_operation_from_request
 
@@ -38,7 +38,7 @@ class TestGetOperation:
             assert self.operation == get_operation_from_request(content_type)
         assert message in str(exc_info.value)
 
-    @mock.patch('slothql.operation.Operation.from_raw_json', side_effect=OperationSyntaxError('mocked exception'))
+    @mock.patch('slothql.operation.Operation.from_raw_json', side_effect=InvalidOperation('mocked exception'))
     def test_query_from_request__post_invalid_json(self, from_raw_json):
         request = self.rf.post('', data='{"query": "hello"}', content_type='application/json')
         with pytest.raises(ValidationError) as exc_info:

@@ -3,8 +3,8 @@ from graphql import ResolveInfo
 from .types.fields import Field, Integer, Float, String, Boolean, ID, JsonString, DateTime, Date, Time
 from .types import BaseType, Object, Enum, EnumValue, Union
 from .schema import Schema
-from .operation import Operation
-from .query import gql
+from .operation import Operation, InvalidOperation
+from .query import gql, ExecutionResult
 
 __all__ = (
     # graphql
@@ -12,19 +12,28 @@ __all__ = (
 
     # fields
     'Field',
-    'Integer', 'Float', 'String', 'Boolean', 'ID',
+    'Integer',
+    'Float',
+    'String',
+    'Boolean',
+    'ID',
     'JsonString',
-    'DateTime', 'Date', 'Time',
+    'DateTime',
+    'Date',
+    'Time',
 
     # types
     'BaseType',
     'Object',
-    'Enum', 'EnumValue',
+    'Enum',
+    'EnumValue',
     'Union',
 
     'Operation',
+    'InvalidOperation',
     'Schema',
     'gql',
+    'ExecutionResult',
 )
 
 try:

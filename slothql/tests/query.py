@@ -6,9 +6,9 @@ from ..query import gql
 
 
 @pytest.mark.parametrize('kwargs, message', (
-        ({'query': 'foo'}, 'Using "query" with "operation" is ambiguous',),
-        ({'variables': {'foo': 'bar'}}, 'Using "variables" with "operation" is ambiguous',),
-        ({'operation_name': 'foo'}, 'Using "operation_name" with "operation" is ambiguous',),
+        ({'query': 'foo'}, 'Using "query" with "operation" is ambiguous'),
+        ({'variables': {'foo': 'bar'}}, 'Using "variables" with "operation" is ambiguous'),
+        ({'operation_name': 'foo'}, 'Using "operation_name" with "operation" is ambiguous'),
 ))
 def test_ambiguous_usage(schema_mock, operation_mock, kwargs, message):
     with pytest.raises(AssertionError) as exc_info:

@@ -1,7 +1,7 @@
 from django.core.exceptions import ValidationError
 from django.core.handlers.wsgi import WSGIRequest
 
-from slothql.operation import Operation, OperationSyntaxError
+from slothql.operation import Operation, InvalidOperation
 
 
 def get_operation_from_request(request: WSGIRequest) -> Operation:
@@ -17,6 +17,6 @@ def get_operation_from_request(request: WSGIRequest) -> Operation:
     if request.content_type in ('application/graphql', 'application/json'):
         try:
             return Operation.from_string(request.body.decode())
-        except OperationSyntaxError as e:
+        except InvalidOperation as e:
             raise ValidationError(str(e))
     raise ValidationError(f'Unsupported content-type {request.content_type}')

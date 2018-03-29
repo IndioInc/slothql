@@ -16,6 +16,10 @@ class ExecutionResult(dict):
     def data(self):
         return self.get('data')
 
+    @property
+    def valid(self) -> bool:
+        return 'errors' not in self
+
 
 def middleware(resolver, obj, info, **kwargs):
     """
