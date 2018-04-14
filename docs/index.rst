@@ -8,7 +8,7 @@ Contents, indices and tables
    :maxdepth: 2
 
    quickstart
-   types
+   fields
    django
 
 

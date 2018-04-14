@@ -1,6 +1,4 @@
 # Quick start
-some bla bla bla about the lib
-
 
 ## Installation
 ```bash
@@ -17,5 +15,5 @@ class Query(slothql.Object):
 schema = slothql.Schema(query=Query)
 
 slothql.gql(schema=schema, query='query { hello }')
-# {'data': OrderedDict([('hello', 'world')])}
+# output: {'data': {'hello', 'world'}}
 ```
