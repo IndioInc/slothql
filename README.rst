@@ -9,6 +9,9 @@ SlothQL
     :target: https://coveralls.io/github/IndioInc/slothql?branch=master
     :alt: Coverage
 
+.. image:: https://readthedocs.org/projects/slothql/badge/?version=latest
+    :target: http://slothql.readthedocs.io/en/latest/?badge=latest
+    :alt: Docs
 
 Requirements
 ------------
