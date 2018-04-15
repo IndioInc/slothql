@@ -3,8 +3,6 @@ from unittest import mock
 
 from django.db import models
 
-import slothql
-
 from ..model import Model
 from ..registry import TypeRegistry
 
@@ -17,8 +15,7 @@ class MetaFieldsModel(models.Model):
         app_label = 'slothql'
 
 
-def test_fields__regular():
-    field_mock = mock.Mock(spec=slothql.Field)
+def test_fields__regular(field_mock):
     with mock.patch.object(TypeRegistry, 'get', return_value=field_mock) as get:
         class Test(Model):
             class Meta:

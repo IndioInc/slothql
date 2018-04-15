@@ -28,8 +28,7 @@ class UnionMeta(BaseMeta):
             f' or each subtype has to provide a `is_type_of` method'
         return cls
 
-    @classmethod
-    def get_option_attrs(mcs, name: str, base_attrs: dict, attrs: dict, meta_attrs: dict):
+    def get_option_attrs(cls, name: str, base_attrs: dict, attrs: dict, meta_attrs: dict):
         union_types = meta_attrs.get('union_types')
         assert union_types is None or all(issubclass(t, Object) for t in union_types), \
             f'`union_types` have to be an iterable of Object, not {union_types}'

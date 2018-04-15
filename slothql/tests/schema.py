@@ -27,7 +27,8 @@ class TestSchema:
     @pytest.mark.parametrize('call', (True, False))
     def test_complex_schema(self, call):
         class Nested(slothql.Object):
-            nested = slothql.Field(self.query_class() if call else self.query_class, lambda *_: {'world': 'not hello'})
+            nested = slothql.Field(of_type=self.query_class() if call else self.query_class,
+                                   resolver=lambda *_: {'world': 'not hello'})
 
         query = 'query { nested { hello } }'
         assert {'data': {'nested': {'hello': 'world'}}} == slothql.gql(slothql.Schema(query=Nested), query)

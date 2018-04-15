@@ -1,6 +1,8 @@
 import inspect
 from typing import Union, Type, Callable, Tuple, Iterable
 
+import graphql
+
 from slothql.utils import is_magic_name, get_attr_fields
 from slothql.utils.singleton import Singleton
 
@@ -26,29 +28,26 @@ class BaseMeta(Singleton):
     def __new__(mcs, name: str, bases: Tuple[type], attrs: dict,
                 options_class: Type[BaseOptions] = BaseOptions, **kwargs):
         assert 'Meta' not in attrs or inspect.isclass(attrs['Meta']), 'attribute Meta has to be a class'
+        cls: BaseMeta = super().__new__(mcs, name, bases, attrs)
+        base_option = cls.merge_options(*mcs.get_options_bases(bases))
         meta_attrs = get_attr_fields(attrs['Meta']) if 'Meta' in attrs else {}
-        base_option = mcs.merge_options(*mcs.get_options_bases(bases))
-        meta = options_class(
-            **mcs.merge_options(base_option, mcs.get_option_attrs(name, base_option, attrs, meta_attrs)),
+        cls._meta = options_class(
+            **cls.merge_options(base_option, cls.get_option_attrs(name, base_option, attrs, meta_attrs)),
         )
-        cls = super().__new__(mcs, name, bases, attrs)
-        cls._meta = meta
         return cls
 
-    @classmethod
-    def get_option_attrs(mcs, name: str, base_attrs: dict, attrs: dict, meta_attrs: dict) -> dict:
+    def get_option_attrs(cls, name: str, base_attrs: dict, attrs: dict, meta_attrs: dict) -> dict:
         defaults = {
             'name': meta_attrs.get('name') or name,
             'abstract': meta_attrs.get('abstract', False),
         }
         return {**meta_attrs, **defaults}
 
-    @classmethod
-    def merge_options(mcs, *options: dict):
+    def merge_options(cls, *options: dict) -> dict:
         result = {}
         for option_set in options:
             for name, value in option_set.items():
-                result[name] = mcs.merge_field(result.get(name), value)
+                result[name] = cls.merge_field(result.get(name), value)
         return result
 
     @classmethod
@@ -70,6 +69,13 @@ class BaseType(metaclass=BaseMeta):
     def __new__(cls, *more):
         assert not cls._meta.abstract, f'Abstract type {cls.__name__} can not be instantiated'
         return super().__new__(cls)
+
+    @classmethod
+    def resolve(cls, parent, info: graphql.ResolveInfo, args: dict):
+        raise NotImplementedError
+
+    def __repr__(self):
+        return self.__class__.__name__
 
 
 LazyType = Union[Type[BaseType], BaseType, Callable]

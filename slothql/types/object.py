@@ -6,6 +6,7 @@ from slothql.arguments.filters import get_filter_fields, FilterSet
 
 from .base import BaseType, BaseMeta, BaseOptions
 from .fields import Field
+from .mixins import FieldMetaMixin
 
 
 class ObjectOptions(BaseOptions):
@@ -16,7 +17,7 @@ class ObjectOptions(BaseOptions):
         self.fields = {}
 
 
-class ObjectMeta(BaseMeta):
+class ObjectMeta(FieldMetaMixin, BaseMeta):
     __slots__ = ()
 
     def __new__(mcs, name, bases, attrs: dict, options_class: Type[ObjectOptions] = ObjectOptions, **kwargs):
@@ -26,12 +27,6 @@ class ObjectMeta(BaseMeta):
         assert cls._meta.abstract or cls._meta.fields, \
             f'"{name}" has to provide some fields, or use "class Meta: abstract = True"'
         return cls
-
-    @classmethod
-    def get_option_attrs(mcs, name: str, base_attrs: dict, attrs: dict, meta_attrs: dict) -> dict:
-        return {**super().get_option_attrs(name, base_attrs, attrs, meta_attrs), **{
-            'fields': {name: field for name, field in attrs.items() if isinstance(field, Field)},
-        }}
 
 
 class Object(BaseType, metaclass=ObjectMeta):

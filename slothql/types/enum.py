@@ -15,8 +15,7 @@ class EnumMeta(BaseMeta):
     def __new__(mcs, *args, options_class: Type[EnumOptions] = EnumOptions, **kwargs):
         return super().__new__(mcs, *args, options_class, **kwargs)
 
-    @classmethod
-    def get_option_attrs(mcs, name: str, base_attrs: dict, attrs: dict, meta_attrs: dict):
+    def get_option_attrs(cls, name: str, base_attrs: dict, attrs: dict, meta_attrs: dict):
         return {**super().get_option_attrs(name, base_attrs, attrs, meta_attrs), **{
             'enum_values': {field_name: field for field_name, field in attrs.items() if isinstance(field, EnumValue)},
         }}

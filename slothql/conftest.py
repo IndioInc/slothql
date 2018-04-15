@@ -45,12 +45,12 @@ def info_mock():
 
 @pytest.fixture()
 def resolver_mock():
-    return mock.Mock(side_effect=lambda o, *_: o)
+    return mock.Mock(spec=staticmethod, side_effect=lambda o, *_: o)
 
 
 @pytest.fixture()
-def field_mock():
-    return mock.Mock(spec=slothql.Field)
+def field_mock(resolver_mock):
+    return mock.Mock(spec=slothql.Field, _resolver=resolver_mock, description=None, source=None, many=False)
 
 
 @pytest.fixture()

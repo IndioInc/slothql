@@ -13,19 +13,17 @@ def test_singleton():
 
 
 def test_register_field(type_registry: TypeRegistry):
-    field = mock.Mock(spec=slothql.Field)
-    type_registry.register(models.Field, field)
-    assert type_registry._type_mapping[models.Field] == field
+    type_registry.register(models.Field, slothql.Boolean)
+    assert slothql.Boolean is type_registry._type_mapping[models.Field]
 
 
-def test_register_field__invalid_django_field(type_registry: TypeRegistry):
-    with pytest.raises(AssertionError):
-        type_registry.register(models.Model, mock.Mock(spec=slothql.Field))
-
-
-def test_register_field__django_field_instance(type_registry: TypeRegistry):
-    with pytest.raises(AssertionError):
-        type_registry.register(models.Field(), mock.Mock(spec=slothql.Field))
+@pytest.mark.parametrize('field', (
+    models.Model, models.Field(),
+))
+def test_register_field__invalid_django_field(field, type_registry: TypeRegistry):
+    with pytest.raises(AssertionError) as exc_info:
+        type_registry.register(field, mock.Mock(spec=slothql.Field))
+    assert str(exc_info.value).startswith('Expected django_field to be a subclass')
 
 
 def test_clear(type_registry: TypeRegistry):
@@ -35,14 +33,14 @@ def test_clear(type_registry: TypeRegistry):
 
 
 def test_unregister(type_registry: TypeRegistry):
-    type_registry._type_mapping = {'field': 'whatever', 'field2': 'wtf'}
-    type_registry.unregister('field')
-    assert type_registry._type_mapping == {'field2': 'wtf'}
+    type_registry._type_mapping = {models.CharField: 'whatever', models.TextField: 'wtf'}
+    type_registry.unregister(models.CharField)
+    assert type_registry._type_mapping == {models.TextField: 'wtf'}
 
 
 def test_get(type_registry: TypeRegistry):
-    type_registry._type_mapping = {'field': 'whatever', str: 'wtf'}
-    assert type_registry.get('field2') == 'wtf'
+    type_registry._type_mapping = {models.CharField: slothql.Boolean}
+    assert isinstance(type_registry.get(models.CharField()), slothql.Boolean)
 
 
 def test_get__not_supported(type_registry: TypeRegistry):

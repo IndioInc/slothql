@@ -4,7 +4,7 @@ from unittest import mock
 import slothql
 from slothql.types import fields
 
-from ..object import Object, ObjectMeta, ObjectOptions
+from ..object import Object, ObjectOptions
 
 
 def test_cannot_init():
@@ -50,7 +50,7 @@ class TestObjectInheritance:
         class Inherit(Object):
             field = field_mock
 
-        assert Inherit()._meta.name == 'Inherit'
+        assert 'Inherit' == Inherit()._meta.name
 
     def test_abstract_inherit(self):
         class Inherit(Object):
@@ -88,13 +88,6 @@ class TestObjectFields:
                 abstract = True
 
         assert 'field' not in Inherit._meta.fields
-
-
-def test_merge_object_options_dicts():
-    assert ObjectMeta.merge_options(
-        {'fields': {'a': 1, 'a_b': 1}},
-        {'fields': {'a_b': 2, 'b': 2, 'extra_b': 2}},
-    ) == {'fields': {'a': 1, 'a_b': 2, 'b': 2, 'extra_b': 2}}
 
 
 def test_field_inheritance():
