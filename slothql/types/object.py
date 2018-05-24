@@ -1,11 +1,9 @@
-from typing import Type, Dict
+import typing as t
 
 import slothql
-from slothql.types import scalars
-from slothql.arguments.filters import get_filter_fields, FilterSet
 
 from .base import BaseType, BaseMeta, BaseOptions
-from .fields import Field
+
 from .mixins import FieldMetaMixin
 
 
@@ -18,10 +16,11 @@ class ObjectOptions(BaseOptions):
 
 
 class ObjectMeta(FieldMetaMixin, BaseMeta):
+    _meta: ObjectOptions
     __slots__ = ()
 
-    def __new__(mcs, name, bases, attrs: dict, options_class: Type[ObjectOptions] = ObjectOptions, **kwargs):
-        cls: Type[Object] = super().__new__(mcs, name, bases, attrs, options_class, **kwargs)
+    def __new__(mcs, name, bases, attrs: dict, options_class: t.Type[ObjectOptions] = ObjectOptions, **kwargs):
+        cls: t.Type[Object] = super().__new__(mcs, name, bases, attrs, options_class, **kwargs)
         if not hasattr(cls, 'is_type_of') or cls._meta.abstract and cls._meta.name is 'Object':
             cls.is_type_of = None
         assert cls._meta.abstract or cls._meta.fields, \
@@ -44,14 +43,3 @@ class Object(BaseType, metaclass=ObjectMeta):
         It will be overwritten to None by the metaclass, if not implemented
         """
         pass
-
-    @classmethod
-    def filter_args(cls) -> Dict[str, Field]:
-        return {
-            name: Field(field.of_type)
-            for name, field in cls._meta.fields.items() if isinstance(field.of_type, scalars.ScalarType)
-        }
-
-    @classmethod
-    def filters(cls) -> Dict[str, FilterSet]:
-        return {name: get_filter_fields(field.of_type) for name, field in cls._meta.fields.items()}

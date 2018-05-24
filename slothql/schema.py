@@ -1,5 +1,7 @@
 import collections
 import functools
+import random
+import string
 from typing import Dict, Callable
 
 import graphql
@@ -87,7 +89,7 @@ class ProxyTypeMap(dict):
                     type=self.get_type(field),
                     args={
                         (snake_to_camelcase(arg_name) if self.to_camelcase else arg_name): self.get_argument(arg_field)
-                        for arg_name, arg_field in field.filter_args.items()
+                        for arg_name, arg_field in field.arguments.items()
                     },
                     resolver=field.resolver,
                     deprecation_reason=None,
@@ -108,11 +110,19 @@ class ProxyTypeMap(dict):
 
     def get_argument(self, field) -> graphql.GraphQLArgument:
         return graphql.GraphQLArgument(
-            type=self.get_input_type(field.of_type),
+            type=self.get_input_type(field),
         )
 
-    def get_input_type(self, of_type):
-        return self.get_scalar_type(of_type)
+    def get_input_type(self, of_type, name: str = None):
+        if isinstance(of_type, dict):
+            return graphql.GraphQLInputObjectType(
+                name=name or str(''.join(random.choice(string.ascii_letters) for _ in range(10))),
+                fields={snake_to_camelcase(name): graphql.GraphQLInputObjectField(self.get_input_type(field))
+                        for name, field in of_type.items()},
+            )
+        if isinstance(of_type, slothql.Field):
+            return self.get_scalar_type(of_type.of_type)
+        raise NotImplementedError(f'Type conversion for {type(of_type)} is not implemented.')
 
     def type_resolver(self, resolve_type: Callable) -> Callable:
         @functools.wraps(resolve_type)

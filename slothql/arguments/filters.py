@@ -1,17 +1,17 @@
 import operator
 import functools
-from typing import Iterable, Callable, Union, Optional
+import typing as t
 
 from slothql.types import scalars
 
-FilterValue = Union[int, str, bool, list]
+FilterValue = t.Union[int, str, bool, list]
 
 
 def field_getter(obj, field_name):
     return getattr(obj, field_name, obj.get(field_name))
 
 
-def filter_function(iterable: Iterable, field_name: str, value: FilterValue, comparator: Callable) -> Iterable:
+def filter_function(iterable: t.Iterable, field_name: str, value: FilterValue, comparator: t.Callable) -> t.Iterable:
     yield from (i for i in iterable if comparator(field_getter(i, field_name), value))
 
 
@@ -26,7 +26,7 @@ class FilterSet(dict):
         assert default_filter in self
         self.default_filter = default_filter
 
-    def apply(self, collection: Iterable, field_name: str, value: FilterValue) -> Iterable:
+    def apply(self, collection: t.Iterable, field_name: str, value: FilterValue) -> t.Iterable:
         new_collection = collection
         if isinstance(value, dict):
             for filter_func, filter_value in value.items():
@@ -52,7 +52,7 @@ IDFilterSet = FilterSet({
 }, 'eq')
 
 
-def get_filter_fields(scalar_type: scalars.ScalarType) -> Optional[FilterSet]:
+def get_filter_fields(scalar_type: scalars.ScalarType) -> t.Optional[FilterSet]:
     if isinstance(scalar_type, scalars.IDType):
         return IDFilterSet
     elif isinstance(scalar_type, scalars.StringType):
@@ -60,3 +60,7 @@ def get_filter_fields(scalar_type: scalars.ScalarType) -> Optional[FilterSet]:
     elif isinstance(scalar_type, scalars.IntegerType):
         return IntegerFilterSet
     raise NotImplementedError()
+
+
+# class Filter(slothql.Object):
+#     pass

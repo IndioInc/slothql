@@ -4,8 +4,10 @@ import typing as t
 import graphql
 
 from slothql import types
+from slothql.arguments import filters
 from slothql.types.base import LazyType, resolve_lazy_type, BaseType
 
+from .. import scalars
 from .resolver import get_resolver, Resolver, PartialResolver, ResolveArgs, is_valid_resolver
 
 
@@ -83,12 +85,28 @@ class Field:
         return functools.partial(self.resolve, resolver)
 
     @property
-    def filter_args(self) -> dict:
-        return self.of_type.filter_args() if isinstance(self.of_type, types.Object) else {}
+    def arguments(self) -> dict:
+        if isinstance(self.of_type, types.Object):
+            r = {
+                'filter': {
+                    name: Field(field.of_type)
+                    for name, field in self.of_type._meta.fields.items()
+                    if isinstance(field.of_type, scalars.ScalarType)
+                },
+                # 'pagination': {},  # TODO
+                # 'ordering': {},  # TODO
+                # 'search': {},  # TODO
+            }
+            if not r.get('filter'):
+                return {}  # FIXME: happens for Objects with Field referencing other Objects
+            return r
+        return {}
 
     @property
     def filters(self) -> dict:
-        return self.of_type.filters() if isinstance(self.of_type, types.Object) else {}
+        if isinstance(self.of_type, types.Object):
+            return {name: filters.get_filter_fields(field.of_type) for name, field in self.of_type._meta.fields.items()}
+        return {}
 
     def apply_filters(self, resolved, args: dict):
         for field_name, value in args.items():
@@ -98,7 +116,7 @@ class Field:
 
     def resolve(self, resolver: Resolver, obj, info: graphql.ResolveInfo, **kwargs):
         resolved = resolver(obj, info, kwargs)
-        return self.apply_filters(resolved, kwargs) if self.many else resolved
+        return self.apply_filters(resolved, kwargs.get('filter', {})) if self.many else resolved
 
     def get_internal_name(self, name: str) -> str:
         return self.source or name

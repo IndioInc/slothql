@@ -4,8 +4,8 @@ import slothql
 
 
 @pytest.mark.parametrize('query, expected', (
-        ('query { foos(id: 1) { id } }', [{'id': '1'}]),
-        ('query { foos(id: "1") { id } }', [{'id': '1'}]),
+        ('query { foos(filter: {id: 1}) { id } }', [{'id': '1'}]),
+        ('query { foos(filter: {id: "1"}) { id } }', [{'id': '1'}]),
         # ('query { foos(id: {eq: "1"}) { id } }', [{'id': '1'}]),
         # ('query { foos(id: {in: ["1", "2"]}) { id } }', [{'id': '1'}, {'id': '2'}]),
 ))
@@ -26,5 +26,6 @@ def test_invalid_filter():
     class Query(slothql.Object):
         foos = slothql.Field(Foo, many=True)
 
-    error = {'message': 'Argument "id" has invalid value {wtf: 1}.\nExpected type "ID", found {wtf: 1}.'}
-    assert [error] == slothql.gql(slothql.Schema(query=Query), 'query { foos(id: {wtf: 1}) { id } }').errors
+    error = {'message': 'Argument "filter" has invalid value {id: {wtf: 1}}.\n'
+                        'In field "id": Expected type "ID", found {wtf: 1}.'}
+    assert [error] == slothql.gql(slothql.Schema(query=Query), 'query { foos(filter: {id: {wtf: 1}}) { id } }').errors
