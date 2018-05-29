@@ -1,7 +1,6 @@
+import inspect
 import collections
 import functools
-import random
-import string
 from typing import Dict, Callable
 
 import graphql
@@ -12,6 +11,7 @@ from graphql.type.typemap import GraphQLTypeMap
 
 import slothql
 from slothql.types import scalars
+from slothql.types.fields.filter import Filter
 from slothql.utils import snake_to_camelcase
 from .types.base import LazyType, resolve_lazy_type
 
@@ -84,7 +84,7 @@ class ProxyTypeMap(dict):
                 description=None,
             )
             self[graphql_type.name] = graphql_type
-            graphql_type.fields = {
+            graphql_type._fields = {
                 (snake_to_camelcase(name) if self.to_camelcase else name): graphql.GraphQLField(
                     type=self.get_type(field),
                     args={
@@ -95,6 +95,17 @@ class ProxyTypeMap(dict):
                     deprecation_reason=None,
                     description=field.description,
                 ) for name, field in of_type._meta.fields.items()
+            }
+            return graphql_type
+        elif inspect.isclass(of_type) and issubclass(of_type, Filter):
+            graphql_type = graphql.GraphQLInputObjectType(
+                name=of_type._meta.name,
+                fields={},
+            )
+            self[graphql_type.name] = graphql_type
+            graphql_type._fields = {
+                snake_to_camelcase(name): graphql.GraphQLInputObjectField(self.get_input_type(field))
+                for name, field in of_type._meta.fields.items()
             }
             return graphql_type
         else:
@@ -113,13 +124,9 @@ class ProxyTypeMap(dict):
             type=self.get_input_type(field),
         )
 
-    def get_input_type(self, of_type, name: str = None):
-        if isinstance(of_type, dict):
-            return graphql.GraphQLInputObjectType(
-                name=name or str(''.join(random.choice(string.ascii_letters) for _ in range(10))),
-                fields={snake_to_camelcase(name): graphql.GraphQLInputObjectField(self.get_input_type(field))
-                        for name, field in of_type.items()},
-            )
+    def get_input_type(self, of_type):
+        if inspect.isclass(of_type) and issubclass(of_type, Filter):
+            return self.get_graphql_type(of_type)
         if isinstance(of_type, slothql.Field):
             return self.get_scalar_type(of_type.of_type)
         raise NotImplementedError(f'Type conversion for {type(of_type)} is not implemented.')

@@ -60,7 +60,3 @@ def get_filter_fields(scalar_type: scalars.ScalarType) -> t.Optional[FilterSet]:
     elif isinstance(scalar_type, scalars.IntegerType):
         return IntegerFilterSet
     raise NotImplementedError()
-
-
-# class Filter(slothql.Object):
-#     pass

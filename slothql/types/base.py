@@ -8,7 +8,10 @@ from slothql.utils.singleton import Singleton
 
 
 class BaseOptions:
-    __slots__ = 'abstract', 'name', 'description'
+    __slots__ = 'parent', 'abstract', 'name', 'description'
+    abstract: bool
+    name: str
+    description: str
 
     def set_defaults(self):
         for name in (n for n in dir(self) if not is_magic_name(n)):
@@ -38,6 +41,7 @@ class BaseMeta(Singleton):
 
     def get_option_attrs(cls, name: str, base_attrs: dict, attrs: dict, meta_attrs: dict) -> dict:
         defaults = {
+            'parent': cls,
             'name': meta_attrs.get('name') or name,
             'abstract': meta_attrs.get('abstract', False),
         }

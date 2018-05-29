@@ -1,6 +1,8 @@
 import pytest
 from unittest import mock
 
+import inspect
+
 import slothql
 from slothql.types import fields
 
@@ -183,3 +185,18 @@ def test_name_collision__interfaces():
         interfaces = slothql.String(resolver=lambda: 'foo')
 
     slothql.Schema(query=Query)
+
+
+def test_object_field_construction():
+    class Foo(slothql.Object):
+        string = slothql.String()
+        float = slothql.Float()
+        bool = slothql.Float()
+
+    filter_class = Foo().filter_class
+    assert inspect.isclass(filter_class)
+    assert {
+        'string': slothql.String(),
+        'float': slothql.Float(),
+        'bool': slothql.Boolean(),
+    } == filter_class._meta.fields

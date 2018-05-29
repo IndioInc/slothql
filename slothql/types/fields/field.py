@@ -7,7 +7,6 @@ from slothql import types
 from slothql.arguments import filters
 from slothql.types.base import LazyType, resolve_lazy_type, BaseType
 
-from .. import scalars
 from .resolver import get_resolver, Resolver, PartialResolver, ResolveArgs, is_valid_resolver
 
 
@@ -49,7 +48,7 @@ class Field:
         self.parent = parent
 
     @classmethod
-    def reinstantiate(cls, field: 'Field', name: str, parent):
+    def reinstantiate(cls, field: 'Field', name: str, parent: BaseType):
         assert isinstance(field, Field), f'field has to be of type {repr(Field)}, not {repr(field)}'
         return cls(
             of_type=field._type,
@@ -85,19 +84,15 @@ class Field:
         return functools.partial(self.resolve, resolver)
 
     @property
-    def arguments(self) -> dict:
+    def arguments(self) -> t.Optional:
         if isinstance(self.of_type, types.Object):
             r = {
-                'filter': {
-                    name: Field(field.of_type)
-                    for name, field in self.of_type._meta.fields.items()
-                    if isinstance(field.of_type, scalars.ScalarType)
-                },
+                'filter': self.of_type.filter_class,
                 # 'pagination': {},  # TODO
                 # 'ordering': {},  # TODO
                 # 'search': {},  # TODO
             }
-            if not r.get('filter'):
+            if not r['filter']._meta.fields:
                 return {}  # FIXME: happens for Objects with Field referencing other Objects
             return r
         return {}
