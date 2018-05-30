@@ -27,7 +27,7 @@ class BaseOptions:
                 raise AttributeError(f'Meta received an unexpected attribute "{name} = {value}"')
 
 
-class BaseMeta(Singleton):
+class BaseMeta(type):
     def __new__(mcs, name: str, bases: Tuple[type], attrs: dict,
                 options_class: Type[BaseOptions] = BaseOptions, **kwargs):
         assert 'Meta' not in attrs or inspect.isclass(attrs['Meta']), 'attribute Meta has to be a class'
@@ -70,7 +70,7 @@ class BaseMeta(Singleton):
 
 class BaseType(metaclass=BaseMeta):
     @staticmethod
-    def __new__(cls, *more):
+    def __new__(cls, *more, **kwargs):
         assert not cls._meta.abstract, f'Abstract type {cls.__name__} can not be instantiated'
         return super().__new__(cls)
 

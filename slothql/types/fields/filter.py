@@ -28,3 +28,24 @@ class FilterMeta(FieldMetaMixin, base.BaseMeta):
 
 class Filter(base.BaseType, metaclass=FilterMeta):
     _meta: FilterOptions
+
+    SKIP = object()
+
+    def __init__(self, **kwargs):
+        for name, value in kwargs.items():
+            if name not in self._meta.fields:
+                raise TypeError(f"{self}.__init__() got an unexpected keyword argument '{name}'")
+        for field_name in self._meta.fields:
+            setattr(self, field_name, kwargs.get(field_name, self.SKIP))
+
+    @staticmethod
+    def get_field(obj, field_name):
+        return obj.get(field_name) if isinstance(obj, dict) else getattr(obj, field_name)
+
+    def apply(self, iterable: t.Iterable) -> t.Iterable:
+        for field_name in self._meta.fields:
+            if getattr(self, field_name) == self.SKIP:
+                continue
+            # FIXME: make generator
+            iterable = [i for i in iterable if self.get_field(i, field_name) == getattr(self, field_name)]
+        return iterable

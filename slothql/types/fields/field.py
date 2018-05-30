@@ -4,7 +4,6 @@ import typing as t
 import graphql
 
 from slothql import types
-from slothql.arguments import filters
 from slothql.types.base import LazyType, resolve_lazy_type, BaseType
 
 from .resolver import get_resolver, Resolver, PartialResolver, ResolveArgs, is_valid_resolver
@@ -60,16 +59,8 @@ class Field:
             parent=parent,
         )
 
-    def get_default_resolver(self, of_type: BaseType) -> Resolver:
-        if isinstance(of_type, types.Object):
-            return lambda obj, info, args: of_type.resolve(self.resolve_field(obj, info, args), info, args)
-        return self.resolve_field
-
-    def get_resolver(self, resolver: PartialResolver, of_type: BaseType) -> Resolver:
-        return get_resolver(self, resolver) or self.get_default_resolver(of_type)
-
     @property
-    def of_type(self) -> BaseType:
+    def of_type(self) -> t.Type[BaseType]:
         if self._type == 'self':
             return self.parent
         resolved_type = resolve_lazy_type(self._type)
@@ -79,8 +70,8 @@ class Field:
 
     @property
     def resolver(self) -> Resolver:
-        resolver = self.get_resolver(self._resolver, self.of_type)
-        assert callable(resolver), f'resolver needs to be callable, not {resolver}'
+        resolver = get_resolver(self, self._resolver)
+        assert resolver is None or callable(resolver), f'resolver needs to be callable, not {resolver}'
         return functools.partial(self.resolve, resolver)
 
     @property
@@ -90,28 +81,17 @@ class Field:
                 'filter': self.of_type.filter_class,
                 # 'pagination': {},  # TODO
                 # 'ordering': {},  # TODO
-                # 'search': {},  # TODO
             }
             if not r['filter']._meta.fields:
-                return {}  # FIXME: happens for Objects with Field referencing other Objects
+                return {}  # FIXME: happens for Objects with Field referencing only other Objects
             return r
         return {}
 
-    @property
-    def filters(self) -> dict:
+    def resolve(self, resolver: t.Optional[Resolver], obj, info: graphql.ResolveInfo, **kwargs):
+        resolved = (resolver or self.resolve_field)(obj, info, kwargs)
         if isinstance(self.of_type, types.Object):
-            return {name: filters.get_filter_fields(field.of_type) for name, field in self.of_type._meta.fields.items()}
-        return {}
-
-    def apply_filters(self, resolved, args: dict):
-        for field_name, value in args.items():
-            filter_set = self.filters[field_name]
-            resolved = filter_set.apply(resolved, field_name, value)
+            return self.of_type.resolve(resolved, info, kwargs)
         return resolved
-
-    def resolve(self, resolver: Resolver, obj, info: graphql.ResolveInfo, **kwargs):
-        resolved = resolver(obj, info, kwargs)
-        return self.apply_filters(resolved, kwargs.get('filter', {})) if self.many else resolved
 
     def get_internal_name(self, name: str) -> str:
         return self.source or name
@@ -127,7 +107,8 @@ class Field:
         return value
 
     def __eq__(self, other: 'class'):
-        assert isinstance(other, Field), f'{Field} can only be compared with other {Field} instances'
+        if not isinstance(other, Field):
+            raise ValueError(f'{Field} can only be compared with other {Field} instances')
         return other.name == other.name and other.parent == other.parent
 
     def __repr__(self) -> str:

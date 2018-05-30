@@ -18,10 +18,10 @@ class TestField:
         field = slothql.Field(of_type=type_mock())
         assert field.resolver(None, info_mock()) is None
 
-    def test_default_resolver(self, type_mock, partials_equal):
+    def test_default_resolver(self, type_mock, info_mock):
         of_type = type_mock()
         field = slothql.Field(of_type=of_type)
-        assert partials_equal(partial(field.resolve, field.get_default_resolver(of_type)), field.resolver)
+        assert 1 == field.resolve(None, {'a': 1}, info_mock(field_name='a'))
 
 
 @pytest.mark.parametrize('obj, expected', (

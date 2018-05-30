@@ -12,6 +12,7 @@ from .fields.filter import Filter
 class ObjectOptions(BaseOptions):
     __slots__ = 'fields', 'filter_class'
     fields: t.Dict[str, Field]
+    filter_class: t.Type[Filter]
 
     def set_defaults(self):
         super().set_defaults()
@@ -38,8 +39,8 @@ class Object(BaseType, metaclass=ObjectMeta):
         abstract = True
 
     @classmethod
-    def resolve(cls, parent, info: slothql.ResolveInfo, args: dict):
-        return parent
+    def resolve(cls, resolved, info: slothql.ResolveInfo, args: dict):
+        return cls._meta.filter_class(**args.get('filter', {})).apply(resolved)
 
     @classmethod
     def is_type_of(cls, obj, info: slothql.ResolveInfo) -> bool:

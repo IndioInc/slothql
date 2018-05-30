@@ -1,23 +1,23 @@
 import inspect
 import functools
-from typing import Callable, Dict, Optional, Any, Union
+import typing as t
 
 import graphql
 from graphql.language.ast import Value
 
 from slothql.utils.functional import is_method, get_function_signature
 
-ResolveArgs = Dict[str, Value]
-PartialResolver = Union[
-    Callable[[Any, graphql.ResolveInfo, ResolveArgs], Any],
-    Callable[[Any, graphql.ResolveInfo], Any],
-    Callable[[Any], Any],
-    Callable[[], Any],
+ResolveArgs = t.Dict[str, Value]
+PartialResolver = t.Union[
+    t.Callable[[t.Any, graphql.ResolveInfo, ResolveArgs], t.Any],
+    t.Callable[[t.Any, graphql.ResolveInfo], t.Any],
+    t.Callable[[t.Any], t.Any],
+    t.Callable[[], t.Any],
 ]
-Resolver = Callable[[Any, graphql.ResolveInfo, ResolveArgs], Any]
+Resolver = t.Callable[[t.Any, graphql.ResolveInfo, ResolveArgs], t.Any]
 
 
-def _get_function(field, resolver: PartialResolver = None) -> Optional[PartialResolver]:
+def _get_function(field, resolver: PartialResolver = None) -> t.Optional[PartialResolver]:
     if resolver is None:
         return None
     if isinstance(resolver, staticmethod):
@@ -45,7 +45,7 @@ def _inject_missing_args(func: PartialResolver) -> Resolver:
     return func
 
 
-def get_resolver(field, resolver: PartialResolver) -> Resolver:
+def get_resolver(field, resolver: PartialResolver) -> t.Optional[Resolver]:
     func = _get_function(field, resolver)
     return func and _inject_missing_args(func)
 
