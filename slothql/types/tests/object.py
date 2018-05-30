@@ -52,7 +52,7 @@ class TestObjectInheritance:
         class Inherit(Object):
             field = field_mock
 
-        assert 'Inherit' == Inherit()._meta.name
+        assert 'Inherit' == Inherit._meta.name
 
     def test_abstract_inherit(self):
         class Inherit(Object):
@@ -78,7 +78,7 @@ class TestObjectFields:
 
     def test_can_add_fields(self):
         class Inherit(Object):
-            field = fields.Field(mock.Mock(spec=Object))
+            field = fields.Field(Object)
 
         assert Inherit.field == Inherit._meta.fields.get('field')
 
@@ -94,22 +94,22 @@ class TestObjectFields:
 
 def test_field_inheritance():
     class Base(Object):
-        base = fields.Field(mock.Mock(spec=Object))
+        base = fields.Field(Object)
 
     class A(Base):
-        a = fields.Field(mock.Mock(spec=Object))
+        a = fields.Field(Object)
 
     assert {'base': Base.base, 'a': A.a} == A._meta.fields
 
 
 def test_field_multi_inheritance():
     class BaseA(Object):
-        base = fields.Field(mock.Mock(spec=Object))
-        base_a = fields.Field(mock.Mock(spec=Object))
+        base = fields.Field(Object)
+        base_a = fields.Field(Object)
 
     class BaseB(Object):
-        base = fields.Field(mock.Mock(spec=Object))
-        base_b = fields.Field(mock.Mock(spec=Object))
+        base = fields.Field(Object)
+        base_b = fields.Field(Object)
 
     class A(BaseA, BaseB):
         a = fields.Field(mock.Mock(spec=Object))
@@ -193,7 +193,7 @@ def test_object_field_construction():
         float = slothql.Float()
         bool = slothql.Float()
 
-    filter_class = Foo().filter_class
+    filter_class = Foo.filter_class()
     assert inspect.isclass(filter_class)
     assert {
         'string': slothql.String(),

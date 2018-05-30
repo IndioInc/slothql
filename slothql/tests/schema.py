@@ -1,5 +1,3 @@
-import pytest
-
 import graphql
 
 import slothql
@@ -14,28 +12,26 @@ class TestSchema:
         cls.query_class = Query
 
     def test_can_init(self):
-        slothql.Schema(query=self.query_class())
+        slothql.Schema(query=self.query_class)
 
     def test_can_init_with_callable_query(self):
-        slothql.Schema(query=self.query_class)
+        slothql.Schema(query=lambda: self.query_class)
 
     def test_execution(self):
         schema = slothql.Schema(query=self.query_class)
         query = 'query { hello }'
         assert {'data': {'hello': 'world'}} == slothql.gql(schema, query)
 
-    @pytest.mark.parametrize('call', (True, False))
-    def test_complex_schema(self, call):
+    def test_complex_schema(self):
         class Nested(slothql.Object):
-            nested = slothql.Field(of_type=self.query_class() if call else self.query_class,
-                                   resolver=lambda *_: {'world': 'not hello'})
+            nested = slothql.Field(self.query_class, resolver=lambda *_: {'world': 'not hello'})
 
         query = 'query { nested { hello } }'
         assert {'data': {'nested': {'hello': 'world'}}} == slothql.gql(slothql.Schema(query=Nested), query)
 
     def test_nested_in_null(self):
         class Nested(slothql.Object):
-            nested = slothql.Field(self.query_class(), resolver=lambda *_: None)
+            nested = slothql.Field(self.query_class, resolver=lambda *_: None)
 
         query = 'query { nested { hello } }'
         assert {'data': {'nested': None}} == slothql.gql(slothql.Schema(query=Nested), query)
@@ -55,8 +51,8 @@ def test_camelcase_schema_integration__queries():
         == slothql.gql(schema, 'query { stringField fooBar { someWeirdField } }')
 
     # shouldn't modify the actual types
-    assert {'string_field', 'foo_bar'} == Query()._meta.fields.keys()
-    assert {'some_weird_field', 'foo_bar'} == FooBar()._meta.fields.keys()
+    assert {'string_field', 'foo_bar'} == Query._meta.fields.keys()
+    assert {'some_weird_field', 'foo_bar'} == FooBar._meta.fields.keys()
 
 
 def test_camelcase_schema_integration__introspection_query():

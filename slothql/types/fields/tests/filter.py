@@ -1,3 +1,5 @@
+import pytest
+
 import inspect
 
 import slothql
@@ -65,3 +67,8 @@ class TestInitializeFilter:
     def test_empty_initialize(self):
         foo_filter = self.FooFilter()
         assert (filter.Filter.SKIP, filter.Filter.SKIP) == (foo_filter.string_field, foo_filter.float_field)
+
+    def test_invalid_initialize(self):
+        with pytest.raises(TypeError) as exc_info:
+            self.FooFilter(invalid=12)
+        assert "FooFilter.__init__() got an unexpected keyword argument 'invalid'" == str(exc_info.value)

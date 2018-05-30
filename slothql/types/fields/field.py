@@ -6,6 +6,7 @@ import graphql
 from slothql import types
 from slothql.types.base import LazyType, resolve_lazy_type, BaseType
 
+from .. import mixins
 from .resolver import get_resolver, Resolver, PartialResolver, ResolveArgs, is_valid_resolver
 
 
@@ -63,10 +64,7 @@ class Field:
     def of_type(self) -> t.Type[BaseType]:
         if self._type == 'self':
             return self.parent
-        resolved_type = resolve_lazy_type(self._type)
-        assert isinstance(resolved_type, BaseType), \
-            f'{self} "of_type" needs to be of type BaseType, not {resolved_type}'
-        return resolved_type
+        return resolve_lazy_type(self._type)
 
     @property
     def resolver(self) -> Resolver:
@@ -76,9 +74,9 @@ class Field:
 
     @property
     def arguments(self) -> t.Optional:
-        if isinstance(self.of_type, types.Object):
+        if issubclass(self.of_type, types.Object):
             r = {
-                'filter': self.of_type.filter_class,
+                'filter': self.of_type.filter_class(),
                 # 'pagination': {},  # TODO
                 # 'ordering': {},  # TODO
             }
@@ -89,7 +87,7 @@ class Field:
 
     def resolve(self, resolver: t.Optional[Resolver], obj, info: graphql.ResolveInfo, **kwargs):
         resolved = (resolver or self.resolve_field)(obj, info, kwargs)
-        if isinstance(self.of_type, types.Object):
+        if issubclass(self.of_type, mixins.Resolvable):
             return self.of_type.resolve(resolved, info, kwargs)
         return resolved
 
@@ -108,7 +106,7 @@ class Field:
 
     def __eq__(self, other: 'class'):
         if not isinstance(other, Field):
-            raise ValueError(f'{Field} can only be compared with other {Field} instances')
+            raise ValueError(f'slothql.Field can only be compared with other slothql.Field instances, not {other}')
         return other.name == other.name and other.parent == other.parent
 
     def __repr__(self) -> str:

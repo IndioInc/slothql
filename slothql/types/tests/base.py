@@ -12,4 +12,4 @@ def test_meta_name(type_name, expected_name):
         class Meta:
             name = type_name
 
-    assert expected_name == FooType()._meta.name
+    assert expected_name == FooType._meta.name

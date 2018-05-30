@@ -1,10 +1,7 @@
 import inspect
-from typing import Union, Type, Callable, Tuple, Iterable
-
-import graphql
+import typing as t
 
 from slothql.utils import is_magic_name, get_attr_fields
-from slothql.utils.singleton import Singleton
 
 
 class BaseOptions:
@@ -28,8 +25,8 @@ class BaseOptions:
 
 
 class BaseMeta(type):
-    def __new__(mcs, name: str, bases: Tuple[type], attrs: dict,
-                options_class: Type[BaseOptions] = BaseOptions, **kwargs):
+    def __new__(mcs, name: str, bases: t.Tuple[type], attrs: dict,
+                options_class: t.Type[BaseOptions] = BaseOptions, **kwargs):
         assert 'Meta' not in attrs or inspect.isclass(attrs['Meta']), 'attribute Meta has to be a class'
         cls: BaseMeta = super().__new__(mcs, name, bases, attrs)
         base_option = cls.merge_options(*mcs.get_options_bases(bases))
@@ -55,7 +52,7 @@ class BaseMeta(type):
         return result
 
     @classmethod
-    def get_options_bases(mcs, bases: Tuple[type]) -> Iterable[dict]:
+    def get_options_bases(mcs, bases: t.Tuple[type]) -> t.Iterable[dict]:
         yield from (
             get_attr_fields(base._meta)
             for base in reversed(bases) if hasattr(base, '_meta') and isinstance(base._meta, BaseOptions)
@@ -74,21 +71,18 @@ class BaseType(metaclass=BaseMeta):
         assert not cls._meta.abstract, f'Abstract type {cls.__name__} can not be instantiated'
         return super().__new__(cls)
 
-    @classmethod
-    def resolve(cls, parent, info: graphql.ResolveInfo, args: dict):
-        raise NotImplementedError
+    def __init__(self):
+        raise NotImplementedError('BaseType initialization is not supported yet')
 
     def __repr__(self):
         return self.__class__.__name__
 
 
-LazyType = Union[Type[BaseType], BaseType, Callable]
+LazyType = t.Union[t.Type[BaseType], t.Callable]
 
 
-def resolve_lazy_type(lazy_type: LazyType) -> BaseType:
-    assert (inspect.isclass(lazy_type) and issubclass(lazy_type, BaseType) or isinstance(lazy_type, BaseType)
-            or inspect.isfunction(lazy_type)), \
+def resolve_lazy_type(lazy_type: LazyType) -> t.Type[BaseType]:
+    resolved = lazy_type() if inspect.isfunction(lazy_type) else lazy_type
+    assert inspect.isclass(resolved) and issubclass(resolved, BaseType), \
         f'"lazy_type" needs to inherit from BaseType or be a lazy reference, not {lazy_type}'
-    of_type = lazy_type() if inspect.isfunction(lazy_type) else lazy_type
-    of_type = of_type() if inspect.isclass(of_type) else of_type
-    return of_type
+    return resolved

@@ -1,9 +1,9 @@
 import collections
-from functools import partial
 
 import pytest
 
 import slothql
+from slothql.types import scalars
 
 
 @pytest.mark.incremental
@@ -51,3 +51,19 @@ def test_field_parent():
         bar = slothql.Field('self')
 
     assert Foo == Foo.bar.parent == Foo.bar.of_type
+
+
+@pytest.mark.xfail
+def test_field_comparison_different_type(type_mock):
+    assert slothql.Field(scalars.StringType) != slothql.Field(scalars.BooleanType)
+
+
+def test_field_comparison_same_type(type_mock):
+    assert slothql.Field(slothql.BaseType) == slothql.Field(slothql.BaseType)
+
+
+def test_field_comparison_not_field(type_mock):
+    with pytest.raises(ValueError) as exc_info:
+        slothql.Field(type_mock()) != type_mock()
+    assert 'slothql.Field can only be compared with other slothql.Field instances,' \
+           ' not <class \'slothql.types.base.BaseType\'>' == str(exc_info.value)

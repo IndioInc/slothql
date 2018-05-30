@@ -4,7 +4,7 @@ import slothql
 from slothql.types.scalars import ScalarType
 
 from .base import BaseType, BaseMeta, BaseOptions
-from .mixins import FieldMetaMixin
+from .mixins import FieldMetaMixin, Resolvable
 from .fields import Field
 from .fields.filter import Filter
 
@@ -31,15 +31,23 @@ class ObjectMeta(FieldMetaMixin, BaseMeta):
             f'"{name}" has to provide some fields, or use "class Meta: abstract = True"'
         return cls
 
+    def filter_class(cls) -> t.Type[Filter]:
+        if not cls._meta.filter_class:
+            cls._meta.filter_class = Filter.create_class(cls._meta.name + 'Filter', fields={
+                name: field for name, field in cls._meta.fields.items()
+                if issubclass(field.of_type, ScalarType)
+            })
+        return cls._meta.filter_class
 
-class Object(BaseType, metaclass=ObjectMeta):
+
+class Object(Resolvable, BaseType, metaclass=ObjectMeta):
     _meta: ObjectOptions
 
     class Meta:
         abstract = True
 
     @classmethod
-    def resolve(cls, resolved, info: slothql.ResolveInfo, args: dict):
+    def resolve(cls, resolved: t.Iterable, info: slothql.ResolveInfo, args: dict) -> t.Iterable:
         return cls._meta.filter_class(**args.get('filter', {})).apply(resolved)
 
     @classmethod
@@ -49,12 +57,3 @@ class Object(BaseType, metaclass=ObjectMeta):
         It will be overwritten to None by the metaclass, if not implemented
         """
         pass
-
-    @property
-    def filter_class(self) -> t.Type[Filter]:
-        if not self._meta.filter_class:
-            self._meta.filter_class = Filter.create_class(self._meta.name + 'Filter', fields={
-                name: field for name, field in self._meta.fields.items()
-                if isinstance(field.of_type, ScalarType)
-            })
-        return self._meta.filter_class

@@ -6,7 +6,6 @@ from django.conf import settings
 from django.db import models
 
 import graphql
-from graphql.type.definition import GraphQLType
 
 import slothql
 from slothql.types.base import BaseType
@@ -35,7 +34,7 @@ def pytest_runtest_setup(item):
 
 @pytest.fixture()
 def type_mock():
-    return lambda: BaseType(mock.Mock(spec=GraphQLType))
+    return lambda: BaseType
 
 
 @pytest.fixture()

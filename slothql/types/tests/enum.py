@@ -19,7 +19,7 @@ def test_enum_declaration():
         UNKNOWN = EnumValue(value='3', description='nobody knows')
 
     assert {'MALE': (True, 'lads'), 'FEMALE': (2.0, 'gals'), 'UNKNOWN': ('3', 'nobody knows')} \
-        == {name: (value.value, value.description) for name, value in Gender()._meta.enum_values.items()}
+        == {name: (value.value, value.description) for name, value in Gender._meta.enum_values.items()}
 
 
 @pytest.mark.parametrize('value, expected', (

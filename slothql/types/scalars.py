@@ -1,4 +1,4 @@
-from typing import Union, Optional
+import typing as t
 
 from graphql.type import scalars
 
@@ -21,7 +21,7 @@ class IntegerType(ScalarType):
         description = scalars.GraphQLInt.description
 
     @classmethod
-    def serialize(cls, value) -> Optional[int]:
+    def serialize(cls, value) -> t.Optional[int]:
         if value is None:
             return None
         if isinstance(value, int) and not isinstance(value, bool):
@@ -36,7 +36,7 @@ class FloatType(ScalarType):
         description = scalars.GraphQLFloat.description
 
     @classmethod
-    def serialize(cls, value) -> Optional[float]:
+    def serialize(cls, value) -> t.Optional[float]:
         if value is None or isinstance(value, float):
             return value
         raise TypeError(f'`{cls.__name__}.serialize` received invalid value {repr(value)}')
@@ -48,7 +48,7 @@ class StringType(ScalarType):
         description = scalars.GraphQLString.description
 
     @classmethod
-    def serialize(cls, value) -> Optional[str]:
+    def serialize(cls, value) -> t.Optional[str]:
         if value is None or isinstance(value, str):
             return value
         raise TypeError(f'`{cls.__name__}.serialize` received invalid value {repr(value)}')
@@ -60,7 +60,7 @@ class BooleanType(ScalarType):
         description = scalars.GraphQLBoolean.description
 
     @classmethod
-    def serialize(cls, value) -> Optional[bool]:
+    def serialize(cls, value) -> t.Optional[bool]:
         if value is None or isinstance(value, bool):
             return value
         raise TypeError(f'`{cls.__name__}.serialize` received invalid value {repr(value)}')
@@ -72,7 +72,7 @@ class IDType(ScalarType):
         description = scalars.GraphQLID.description
 
     @classmethod
-    def serialize(cls, value) -> Union[int, str]:
+    def serialize(cls, value) -> t.Union[int, str]:
         if value is None or isinstance(value, str):
             return value
         try:
@@ -81,14 +81,14 @@ class IDType(ScalarType):
             raise TypeError(f'`{cls.__name__}.serialize` received invalid value {repr(value)}')
 
 
-def patch_default_scalar(scalar_type: ScalarType, graphql_type: scalars.GraphQLScalarType):
+def patch_default_scalar(scalar_type: t.Type[ScalarType], graphql_type: scalars.GraphQLScalarType):
     graphql_type.name = scalar_type._meta.name
     graphql_type.description = scalar_type._meta.description
     graphql_type.serialize = scalar_type.serialize
 
 
-patch_default_scalar(IntegerType(), scalars.GraphQLInt)
-patch_default_scalar(FloatType(), scalars.GraphQLFloat)
-patch_default_scalar(StringType(), scalars.GraphQLString)
-patch_default_scalar(BooleanType(), scalars.GraphQLBoolean)
-patch_default_scalar(IDType(), scalars.GraphQLID)
+patch_default_scalar(IntegerType, scalars.GraphQLInt)
+patch_default_scalar(FloatType, scalars.GraphQLFloat)
+patch_default_scalar(StringType, scalars.GraphQLString)
+patch_default_scalar(BooleanType, scalars.GraphQLBoolean)
+patch_default_scalar(IDType, scalars.GraphQLID)

@@ -1,4 +1,4 @@
-from typing import Type
+import typing as t
 
 from .base import BaseType, BaseMeta, BaseOptions
 
@@ -12,7 +12,7 @@ class EnumOptions(BaseOptions):
 
 
 class EnumMeta(BaseMeta):
-    def __new__(mcs, *args, options_class: Type[EnumOptions] = EnumOptions, **kwargs):
+    def __new__(mcs, *args, options_class: t.Type[EnumOptions] = EnumOptions, **kwargs):
         return super().__new__(mcs, *args, options_class, **kwargs)
 
     def get_option_attrs(cls, name: str, base_attrs: dict, attrs: dict, meta_attrs: dict):
@@ -30,5 +30,7 @@ class EnumValue:
 
 
 class Enum(BaseType, metaclass=EnumMeta):
+    _meta: EnumOptions
+
     class Meta:
         abstract = True

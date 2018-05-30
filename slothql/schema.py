@@ -1,7 +1,7 @@
 import inspect
 import collections
 import functools
-from typing import Dict, Callable
+import typing as t
 
 import graphql
 from graphql.type import GraphQLEnumValue
@@ -15,20 +15,20 @@ from slothql.types.fields.filter import Filter
 from slothql.utils import snake_to_camelcase
 from .types.base import LazyType, resolve_lazy_type
 
-FieldMap = Dict[str, graphql.GraphQLField]
+FieldMap = t.Dict[str, graphql.GraphQLField]
 
 
 class TypeMap(dict):
-    def __init__(self, *types: slothql.BaseType):
+    def __init__(self, *types: t.Type[slothql.BaseType]):
         super().__init__(functools.reduce(self.type_reducer, types, {}))
 
-    def type_reducer(self, type_map: dict, of_type: slothql.BaseType):
+    def type_reducer(self, type_map: dict, of_type: t.Type[slothql.BaseType]):
         if of_type._meta.name in type_map:
             assert type_map[of_type._meta.name] == of_type, \
                 f'Schema has to contain unique type names, but got multiple types of name `{of_type._meta.name}`'
             return type_map
         type_map[of_type._meta.name] = of_type
-        if isinstance(of_type, slothql.Object):
+        if issubclass(of_type, slothql.Object):
             for field in of_type._meta.fields.values():
                 type_map = self.type_reducer(type_map, field.of_type)
         return type_map
@@ -41,25 +41,28 @@ class ProxyTypeMap(dict):
         for of_type in type_map.values():
             self.get_graphql_type(of_type)
 
-    def get_scalar_type(self, of_type: scalars.ScalarType):
-        if isinstance(of_type, scalars.IDType):
+    def get_scalar_type(self, of_type: t.Type[scalars.ScalarType]):
+        if issubclass(of_type, scalars.IDType):
             return graphql.GraphQLID
-        elif isinstance(of_type, scalars.StringType):
+        elif issubclass(of_type, scalars.StringType):
             return graphql.GraphQLString
-        elif isinstance(of_type, scalars.BooleanType):
+        elif issubclass(of_type, scalars.BooleanType):
             return graphql.GraphQLBoolean
-        elif isinstance(of_type, scalars.IntegerType):
+        elif issubclass(of_type, scalars.IntegerType):
             return graphql.GraphQLInt
-        elif isinstance(of_type, scalars.FloatType):
+        elif issubclass(of_type, scalars.FloatType):
             return graphql.GraphQLFloat
         raise NotImplementedError(f'{of_type} conversion is not implemented')
 
-    def get_graphql_type(self, of_type: slothql.BaseType) -> GraphQLType:
+    def get_graphql_type(self, of_type: t.Type[slothql.BaseType]) -> GraphQLType:
+        assert inspect.isclass(of_type) and issubclass(of_type, slothql.BaseType), \
+            f'Expected `{of_type}` to be a subclass of slothql.BaseType'
+
         if of_type._meta.name in self:
             return self[of_type._meta.name]
-        elif isinstance(of_type, scalars.ScalarType):
+        elif issubclass(of_type, scalars.ScalarType):
             graphql_type = self.get_scalar_type(of_type)
-        elif isinstance(of_type, slothql.Enum):
+        elif issubclass(of_type, slothql.Enum):
             return graphql.GraphQLEnumType(
                 name=of_type._meta.name,
                 values={
@@ -69,13 +72,13 @@ class ProxyTypeMap(dict):
                 },
                 description=of_type._meta.description,
             )
-        elif isinstance(of_type, slothql.Union):
+        elif issubclass(of_type, slothql.Union):
             graphql_type = graphql.GraphQLUnionType(
                 name=of_type._meta.name,
-                types=[self.get_graphql_type(t()) for t in of_type._meta.union_types],
+                types=[self.get_graphql_type(t) for t in of_type._meta.union_types],
                 resolve_type=of_type.resolve_type and self.type_resolver(of_type.resolve_type),
             )
-        elif isinstance(of_type, slothql.Object):
+        elif issubclass(of_type, slothql.Object):
             graphql_type = graphql.GraphQLObjectType(
                 name=of_type._meta.name,
                 fields={},
@@ -97,7 +100,7 @@ class ProxyTypeMap(dict):
                 ) for name, field in of_type._meta.fields.items()
             }
             return graphql_type
-        elif inspect.isclass(of_type) and issubclass(of_type, Filter):
+        elif issubclass(of_type, Filter):
             graphql_type = graphql.GraphQLInputObjectType(
                 name=of_type._meta.name,
                 fields={},
@@ -128,10 +131,12 @@ class ProxyTypeMap(dict):
         if inspect.isclass(of_type) and issubclass(of_type, Filter):
             return self.get_graphql_type(of_type)
         if isinstance(of_type, slothql.Field):
-            return self.get_scalar_type(of_type.of_type)
-        raise NotImplementedError(f'Type conversion for {type(of_type)} is not implemented.')
+            field_type = of_type.of_type
+            if issubclass(field_type, scalars.ScalarType):
+                return self.get_scalar_type(field_type)
+        raise NotImplementedError(f'Type conversion for {of_type} is not implemented.')
 
-    def type_resolver(self, resolve_type: Callable) -> Callable:
+    def type_resolver(self, resolve_type: t.Callable) -> t.Callable:
         @functools.wraps(resolve_type)
         def wrapper(*args, **kwargs):
             resolved_type: slothql.Object = resolve_type(*args, **kwargs)

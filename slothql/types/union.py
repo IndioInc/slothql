@@ -38,6 +38,8 @@ class UnionMeta(BaseMeta):
 
 
 class Union(BaseType, metaclass=UnionMeta):
+    _meta: UnionOptions
+
     class Meta:
         abstract = True
 
