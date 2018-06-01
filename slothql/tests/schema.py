@@ -1,3 +1,5 @@
+import pytest
+
 import graphql
 
 import slothql
@@ -61,3 +63,21 @@ def test_camelcase_schema_integration__introspection_query():
 
     schema = slothql.Schema(query=Query, auto_camelcase=True)
     assert 'errors' not in slothql.gql(schema, graphql.introspection_query)
+
+
+@pytest.mark.parametrize('camel_case, field_name', (
+        (True, 'camelCaseField'),
+        # (False, 'camel_case_field'),
+))
+def test_camelcase_schema_integration__filters(camel_case, field_name):
+    class Foo(slothql.Object):
+        camel_case_field = slothql.String()
+
+    class Query(slothql.Object):
+        foo = slothql.Field(Foo, many=True, filterable=True,
+                            resolver=lambda: [{'camel_case_field': 'foo'}, {'camel_case_field': 'bar'}])
+
+    schema = slothql.Schema(Query, auto_camelcase=camel_case)
+
+    query = f'query {{ foo(filter: {{ {field_name}: "foo" }}) {{ {field_name} }} }}'
+    assert {'data': {'foo': [{field_name: 'foo'}]}} == slothql.gql(schema, query)

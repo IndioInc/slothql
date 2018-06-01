@@ -115,4 +115,4 @@ class Field:
         return other.name == other.name and other.parent == other.parent
 
     def __repr__(self) -> str:
-        return f'{self.source} = {self.__class__.__name__}()'
+        return f'{self.__class__.__name__}()'

@@ -35,11 +35,34 @@ class TypeMap(dict):
 
 
 class ProxyTypeMap(dict):
-    def __init__(self, type_map: TypeMap, to_camelcase: bool = False):
+    def __init__(self, type_map: TypeMap, auto_camelcase: bool = False):
         super().__init__()
-        self.to_camelcase = to_camelcase
+        self.auto_camelcase = auto_camelcase
+        self.camelcase_type_map = collections.defaultdict(dict)
         for of_type in type_map.values():
             self.get_graphql_type(of_type)
+
+    def make_camelcase(self, type_name: str, field_name: str) -> str:
+        if self.auto_camelcase:
+            camelcase = snake_to_camelcase(field_name)
+            self.camelcase_type_map[type_name][camelcase] = field_name
+            return camelcase
+        return field_name
+
+    def get_camelcase_resolver(self, field: slothql.Field) -> callable:
+        if self.auto_camelcase:
+            def camelcase_resolver(parent, info, **args):
+                if field.filterable:
+                    args = {'filter': {
+                        self.camelcase_type_map[field.of_type._meta.filter_class._meta.name][name]: value
+                        for name, value in args.get('filter', {}).items()
+                    }}
+                info.field_name = self.camelcase_type_map[field.parent._meta.name][info.field_name]
+                return field.resolver(parent, info, **args)
+
+            return camelcase_resolver
+
+        return field.resolver
 
     def get_scalar_type(self, of_type: t.Type[scalars.ScalarType]):
         if issubclass(of_type, scalars.IDType):
@@ -66,8 +89,8 @@ class ProxyTypeMap(dict):
             return graphql.GraphQLEnumType(
                 name=of_type._meta.name,
                 values={
-                    (snake_to_camelcase(name) if self.to_camelcase else name): GraphQLEnumValue(
-                        value=value.value, description=value.description)
+                    self.make_camelcase(of_type._meta.name, name):
+                        GraphQLEnumValue(value=value.value, description=value.description)
                     for name, value in of_type._meta.enum_values.items()
                 },
                 description=of_type._meta.description,
@@ -81,37 +104,31 @@ class ProxyTypeMap(dict):
         elif issubclass(of_type, slothql.Object):
             graphql_type = graphql.GraphQLObjectType(
                 name=of_type._meta.name,
-                fields={},
+                fields=lambda: {
+                    self.make_camelcase(of_type._meta.name, name): graphql.GraphQLField(
+                        type=self.get_type(field),
+                        args={
+                            self.make_camelcase(of_type._meta.name, arg_name): self.get_argument(arg_field)
+                            for arg_name, arg_field in field.arguments.items()
+                        },
+                        resolver=self.get_camelcase_resolver(field),
+                        deprecation_reason=None,
+                        description=field.description,
+                    ) for name, field in of_type._meta.fields.items()
+                },
                 interfaces=None,
                 is_type_of=of_type.is_type_of,
                 description=None,
             )
-            self[graphql_type.name] = graphql_type
-            graphql_type._fields = {
-                (snake_to_camelcase(name) if self.to_camelcase else name): graphql.GraphQLField(
-                    type=self.get_type(field),
-                    args={
-                        (snake_to_camelcase(arg_name) if self.to_camelcase else arg_name): self.get_argument(arg_field)
-                        for arg_name, arg_field in field.arguments.items()
-                    },
-                    resolver=field.resolver,
-                    deprecation_reason=None,
-                    description=field.description,
-                ) for name, field in of_type._meta.fields.items()
-            }
-            return graphql_type
         elif issubclass(of_type, Filter):
             graphql_type = graphql.GraphQLInputObjectType(
                 name=of_type._meta.name,
-                fields={},
+                fields=lambda: {
+                    self.make_camelcase(of_type._meta.name, name):
+                        graphql.GraphQLInputObjectField(self.get_input_type(field))
+                    for name, field in of_type._meta.fields.items()
+                },
             )
-            self[graphql_type.name] = graphql_type
-            graphql_type._fields = {
-                (snake_to_camelcase(name) if self.to_camelcase else name):
-                    graphql.GraphQLInputObjectField(self.get_input_type(field))
-                for name, field in of_type._meta.fields.items()
-            }
-            return graphql_type
         else:
             raise NotImplementedError(f'Unsupported type {of_type}')
         self[graphql_type.name] = graphql_type
@@ -150,7 +167,7 @@ class Schema(graphql.GraphQLSchema):
     def __init__(self, query: LazyType, mutation=None, subscription=None, directives=None, types=None,
                  auto_camelcase: bool = False):
         type_map = TypeMap(resolve_lazy_type(query))
-        graphql_type_map = ProxyTypeMap(type_map, to_camelcase=auto_camelcase)
+        graphql_type_map = ProxyTypeMap(type_map, auto_camelcase=auto_camelcase)
         query = query and graphql_type_map[resolve_lazy_type(query)._meta.name]
         mutation = None
         assert isinstance(query, graphql.GraphQLObjectType), f'Schema query must be Object Type but got: {query}.'
