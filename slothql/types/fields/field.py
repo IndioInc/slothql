@@ -11,7 +11,7 @@ from .resolver import get_resolver, Resolver, PartialResolver, ResolveArgs, is_v
 
 
 class Field:
-    __slots__ = 'description', 'many', 'null', '_type', '_resolver', 'source', 'parent', 'name'
+    __slots__ = 'description', 'many', 'null', '_type', '_resolver', 'source', 'parent', 'name', 'filterable'
 
     def __init__(
             self,
@@ -24,6 +24,7 @@ class Field:
             null: bool = True,
             name: str = None,
             parent=None,
+            filterable=False,
     ):
         self._type = of_type
 
@@ -47,6 +48,9 @@ class Field:
         self.name = name
         self.parent = parent
 
+        assert isinstance(filterable, bool), f'Invalid value `{filterable}` for argument `filterable`'
+        self.filterable = filterable
+
     @classmethod
     def reinstantiate(cls, field: 'Field', name: str, parent: BaseType):
         assert isinstance(field, Field), f'field has to be of type {repr(Field)}, not {repr(field)}'
@@ -56,6 +60,7 @@ class Field:
             description=field.description,
             source=field.source,
             many=field.many,
+            filterable=field.filterable,
             name=name,
             parent=parent,
         )
@@ -74,7 +79,7 @@ class Field:
 
     @property
     def arguments(self) -> t.Optional:
-        if issubclass(self.of_type, types.Object):
+        if issubclass(self.of_type, types.Object) and self.filterable:
             r = {
                 'filter': self.of_type.filter_class(),
                 # 'pagination': {},  # TODO
@@ -88,7 +93,7 @@ class Field:
     def resolve(self, resolver: t.Optional[Resolver], obj, info: graphql.ResolveInfo, **kwargs):
         resolved = (resolver or self.resolve_field)(obj, info, kwargs)
         if issubclass(self.of_type, mixins.Resolvable):
-            return self.of_type.resolve(resolved, info, kwargs)
+            return self.of_type.resolve(resolved, info, kwargs, self.many)
         return resolved
 
     def get_internal_name(self, name: str) -> str:

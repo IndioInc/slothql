@@ -21,9 +21,8 @@ class FilterMeta(FieldMetaMixin, base.BaseMeta):
                 options_class: t.Type[FilterOptions] = FilterOptions, **kwargs):
         return super().__new__(mcs, name, bases, attrs, options_class, **kwargs)
 
-    @classmethod
-    def create_class(mcs, name: str, fields: t.Dict[str, Field], description: str = None) -> 'class':
-        return FilterMeta(name, (Filter,), {**fields, 'Meta': type('Meta', (), {'description': description})})
+    def create_class(cls, name: str, fields: t.Dict[str, Field], **kwargs) -> 'class':
+        return cls.__class__(name, (cls,), {**fields, 'Meta': type('Meta', (), kwargs)})
 
 
 class Filter(base.BaseType, metaclass=FilterMeta):
@@ -43,9 +42,15 @@ class Filter(base.BaseType, metaclass=FilterMeta):
         return obj.get(field_name) if isinstance(obj, dict) else getattr(obj, field_name)
 
     def apply(self, iterable: t.Iterable) -> t.Iterable:
-        for field_name in self._meta.fields:
-            if getattr(self, field_name) == self.SKIP:
-                continue
+        for name, value in self.filter_fields.items():
             # FIXME: make generator
-            iterable = [i for i in iterable if self.get_field(i, field_name) == getattr(self, field_name)]
+            iterable = [i for i in iterable if self.get_field(i, name) == value]
         return iterable
+
+    @property
+    def filter_fields(self) -> t.Dict:
+        return {
+            field_name: getattr(self, field_name)
+            for field_name in self._meta.fields
+            if getattr(self, field_name) != self.SKIP
+        }

@@ -31,5 +31,5 @@ class FieldMetaMixin(type):
 
 
 class Resolvable:
-    def resolve(self, resolved: t.Iterable, info: slothql.ResolveInfo, args: ResolveArgs) -> t.Iterable:
+    def resolve(self, resolved: t.Iterable, info: slothql.ResolveInfo, args: ResolveArgs, many: bool) -> t.Iterable:
         raise NotImplementedError

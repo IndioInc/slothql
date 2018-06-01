@@ -107,7 +107,8 @@ class ProxyTypeMap(dict):
             )
             self[graphql_type.name] = graphql_type
             graphql_type._fields = {
-                snake_to_camelcase(name): graphql.GraphQLInputObjectField(self.get_input_type(field))
+                (snake_to_camelcase(name) if self.to_camelcase else name):
+                    graphql.GraphQLInputObjectField(self.get_input_type(field))
                 for name, field in of_type._meta.fields.items()
             }
             return graphql_type

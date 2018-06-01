@@ -33,11 +33,14 @@ class ObjectMeta(FieldMetaMixin, BaseMeta):
 
     def filter_class(cls) -> t.Type[Filter]:
         if not cls._meta.filter_class:
-            cls._meta.filter_class = Filter.create_class(cls._meta.name + 'Filter', fields={
-                name: field for name, field in cls._meta.fields.items()
-                if issubclass(field.of_type, ScalarType)
-            })
+            cls._meta.filter_class = cls.get_filter_class()
         return cls._meta.filter_class
+
+    def get_filter_class(cls) -> t.Type[Filter]:
+        return Filter.create_class(cls._meta.name + 'Filter', fields={
+            name: field for name, field in cls._meta.fields.items()
+            if issubclass(field.of_type, ScalarType)
+        })
 
 
 class Object(Resolvable, BaseType, metaclass=ObjectMeta):
@@ -47,8 +50,10 @@ class Object(Resolvable, BaseType, metaclass=ObjectMeta):
         abstract = True
 
     @classmethod
-    def resolve(cls, resolved: t.Iterable, info: slothql.ResolveInfo, args: dict) -> t.Iterable:
-        return cls._meta.filter_class(**args.get('filter', {})).apply(resolved)
+    def resolve(cls, resolved: t.Iterable, info: slothql.ResolveInfo, args: dict, many: bool) -> t.Iterable:
+        if cls._meta.filter_class:
+            return cls._meta.filter_class(**args.get('filter', {})).apply(resolved)
+        return resolved
 
     @classmethod
     def is_type_of(cls, obj, info: slothql.ResolveInfo) -> bool:

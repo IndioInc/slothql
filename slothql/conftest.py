@@ -49,7 +49,8 @@ def resolver_mock():
 
 @pytest.fixture()
 def field_mock(resolver_mock):
-    return mock.Mock(spec=slothql.Field, _resolver=resolver_mock, description=None, source=None, many=False)
+    return mock.Mock(spec=slothql.Field, _resolver=resolver_mock, description=None, source=None, many=False,
+                     filterable=False)
 
 
 @pytest.fixture()

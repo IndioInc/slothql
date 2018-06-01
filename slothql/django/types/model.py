@@ -8,8 +8,10 @@ from slothql import Field
 from slothql.types.fields.resolver import ResolveArgs
 from slothql.types.object import Object, ObjectMeta, ObjectOptions
 from slothql.django.utils.model import get_model_attrs
+from slothql.types.scalars import ScalarType
 
 from .registry import TypeRegistry
+from .filter import DjangoFilter
 
 
 class ModelOptions(ObjectOptions):
@@ -22,6 +24,8 @@ class ModelOptions(ObjectOptions):
 
 
 class ModelMeta(ObjectMeta):
+    _meta: ModelOptions
+
     def __new__(mcs, name, bases, attrs: dict, options_class: t.Type[ModelOptions] = ModelOptions, **kwargs):
         assert 'Meta' in attrs, f'class {name} is missing "Meta" class'
         return super().__new__(mcs, name, bases, attrs, options_class, **kwargs)
@@ -73,6 +77,12 @@ class ModelMeta(ObjectMeta):
             return mcs.resolve_all_fields(model)
         return mcs.resolve_attr_list(model, fields)
 
+    def get_filter_class(cls) -> t.Type[DjangoFilter]:
+        return DjangoFilter.create_class(cls._meta.name + 'Filter', fields={
+            name: field for name, field in cls._meta.fields.items()
+            if issubclass(field.of_type, ScalarType)
+        }, model=cls._meta.model)
+
 
 class Model(Object, metaclass=ModelMeta):
     _meta: ModelOptions
@@ -81,15 +91,12 @@ class Model(Object, metaclass=ModelMeta):
         abstract = True
 
     @classmethod
-    def filter_queryset(cls, queryset: models.QuerySet, args: dict):
-        assert isinstance(queryset, models.QuerySet), f'expected QuerySet, received {repr(queryset)}'
-        return queryset.filter()
-
-    @classmethod
-    def resolve(cls, resolved: t.Iterable, info: graphql.ResolveInfo, args: ResolveArgs) -> t.Iterable:
+    def resolve(cls, resolved: t.Iterable, info: graphql.ResolveInfo, args: ResolveArgs, many: bool) -> t.Iterable:
         if resolved is None:
-            queryset = cls._meta.model._default_manager.get_queryset()
+            queryset: models.QuerySet = cls._meta.model._default_manager.get_queryset()
         else:
             queryset = resolved.get_queryset() if isinstance(resolved, models.Manager) else resolved
-        return cls.filter_queryset(queryset, args)
-        return super().resolve(queryset, info, args)
+        queryset = super().resolve(queryset, info, args, many)
+        if not many:
+            return queryset.get()
+        return queryset
