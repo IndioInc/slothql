@@ -24,6 +24,8 @@ class DjangoFilter(Filter, metaclass=DjangoFilterMeta):
     def apply(self, queryset: models.QuerySet) -> models.QuerySet:
         assert isinstance(queryset, models.QuerySet), f'Expected QuerySet, but received {queryset}'
         for field, value in self.filter_fields.items():
+            if isinstance(value, dict):
+                continue
             if value is None:
                 queryset = queryset.filter(**{f'{field}__isnull': True})
             else:

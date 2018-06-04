@@ -8,7 +8,6 @@ from slothql import Field
 from slothql.types.fields.resolver import ResolveArgs
 from slothql.types.object import Object, ObjectMeta, ObjectOptions
 from slothql.django.utils.model import get_model_attrs
-from slothql.types.scalars import ScalarType
 
 from .registry import TypeRegistry
 from .filter import DjangoFilter
@@ -79,8 +78,15 @@ class ModelMeta(ObjectMeta):
 
     def get_filter_class(cls) -> t.Type[DjangoFilter]:
         return DjangoFilter.create_class(cls._meta.name + 'Filter', fields={
-            name: field for name, field in cls._meta.fields.items()
-            if issubclass(field.of_type, ScalarType)
+            name:
+                Field(
+                    of_type=(field.of_type.filter_class if issubclass(field.of_type, Model)
+                             else field.of_type),
+                    many=field.many,
+                    null=field.null,
+                    source=field.source,
+                )
+            for name, field in cls._meta.fields.items() if field.filterable
         }, model=cls._meta.model)
 
 

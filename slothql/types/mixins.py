@@ -1,6 +1,7 @@
 import typing as t
 
-import slothql
+import graphql
+
 from slothql.types.fields.resolver import ResolveArgs
 from .fields import Field
 
@@ -31,5 +32,5 @@ class FieldMetaMixin(type):
 
 
 class Resolvable:
-    def resolve(self, resolved: t.Iterable, info: slothql.ResolveInfo, args: ResolveArgs, many: bool) -> t.Iterable:
+    def resolve(self, resolved: t.Iterable, info: graphql.ResolveInfo, args: ResolveArgs, many: bool) -> t.Iterable:
         raise NotImplementedError

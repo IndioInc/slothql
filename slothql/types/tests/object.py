@@ -193,7 +193,7 @@ def test_object_field_construction():
         float = slothql.Float()
         bool = slothql.Float()
 
-    filter_class = Foo.filter_class()
+    filter_class = Foo.filter_class
     assert inspect.isclass(filter_class)
     assert {
         'string': slothql.String(),

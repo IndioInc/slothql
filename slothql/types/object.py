@@ -1,7 +1,6 @@
 import typing as t
 
 import slothql
-from slothql.types.scalars import ScalarType
 
 from .base import BaseType, BaseMeta, BaseOptions
 from .mixins import FieldMetaMixin, Resolvable
@@ -31,6 +30,7 @@ class ObjectMeta(FieldMetaMixin, BaseMeta):
             f'"{name}" has to provide some fields, or use "class Meta: abstract = True"'
         return cls
 
+    @property
     def filter_class(cls) -> t.Type[Filter]:
         if not cls._meta.filter_class:
             cls._meta.filter_class = cls.get_filter_class()
@@ -38,8 +38,15 @@ class ObjectMeta(FieldMetaMixin, BaseMeta):
 
     def get_filter_class(cls) -> t.Type[Filter]:
         return Filter.create_class(cls._meta.name + 'Filter', fields={
-            name: field for name, field in cls._meta.fields.items()
-            if issubclass(field.of_type, ScalarType)
+            name:
+                Field(
+                    of_type=(lambda: field.of_type.filter_class if issubclass(field.of_type, Object)
+                             else field.of_type),
+                    many=field.many,
+                    null=field.null,
+                    source=field.source,
+                )
+            for name, field in cls._meta.fields.items() if field.filterable
         })
 
 

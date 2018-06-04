@@ -152,6 +152,8 @@ class ProxyTypeMap(dict):
             field_type = of_type.of_type
             if issubclass(field_type, scalars.ScalarType):
                 return self.get_scalar_type(field_type)
+            elif issubclass(field_type, Filter):
+                return self.get_graphql_type(field_type)
         raise NotImplementedError(f'Type conversion for {of_type} is not implemented.')
 
     def type_resolver(self, resolve_type: t.Callable) -> t.Callable:

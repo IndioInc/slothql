@@ -74,8 +74,7 @@ def test_camelcase_schema_integration__filters(camel_case, field_name):
         camel_case_field = slothql.String()
 
     class Query(slothql.Object):
-        foo = slothql.Field(Foo, many=True, filterable=True,
-                            resolver=lambda: [{'camel_case_field': 'foo'}, {'camel_case_field': 'bar'}])
+        foo = slothql.Field(Foo, many=True, resolver=lambda: [{'camel_case_field': 'foo'}, {'camel_case_field': 'bar'}])
 
     schema = slothql.Schema(Query, auto_camelcase=camel_case)
 

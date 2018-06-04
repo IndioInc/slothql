@@ -24,7 +24,7 @@ class Field:
             null: bool = True,
             name: str = None,
             parent=None,
-            filterable=False,
+            filterable=True,
     ):
         self._type = of_type
 
@@ -81,7 +81,7 @@ class Field:
     def arguments(self) -> t.Optional:
         if issubclass(self.of_type, types.Object) and self.filterable:
             r = {
-                'filter': self.of_type.filter_class(),
+                'filter': self.of_type.filter_class,
                 # 'pagination': {},  # TODO
                 # 'ordering': {},  # TODO
             }

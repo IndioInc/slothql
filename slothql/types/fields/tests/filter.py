@@ -1,6 +1,7 @@
-import pytest
-
 import inspect
+import typing as t
+
+import pytest
 
 import slothql
 from .. import filter
@@ -72,3 +73,19 @@ class TestInitializeFilter:
         with pytest.raises(TypeError) as exc_info:
             self.FooFilter(invalid=12)
         assert "FooFilter.__init__() got an unexpected keyword argument 'invalid'" == str(exc_info.value)
+
+
+def test_nested_filters():
+    class Foo(slothql.Object):
+        foo_id = slothql.ID()
+
+    class Bar(slothql.Object):
+        bar_id = slothql.ID()
+        foo = slothql.Field(Foo)
+
+    filter_class: t.Type[filter.Filter] = Bar.filter_class
+    assert issubclass(filter_class, filter.Filter)
+    assert {'foo', 'bar_id'} == filter_class._meta.fields.keys()
+
+    nested_filter_class = filter_class._meta.fields.get('foo').of_type
+    assert nested_filter_class is Foo.filter_class

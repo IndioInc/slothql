@@ -56,7 +56,7 @@ def test_filtering(query, expected):
         id = slothql.ID()
 
     class Query(slothql.Object):
-        foos = slothql.Field(Foo, resolver=lambda: [{'id': '1'}, {'id': '2'}, {'id': '3'}], many=True, filterable=True)
+        foos = slothql.Field(Foo, resolver=lambda: [{'id': '1'}, {'id': '2'}, {'id': '3'}], many=True)
 
     assert {'foos': expected} == slothql.gql(slothql.Schema(query=Query), query).data
 
@@ -66,7 +66,7 @@ def test_invalid_filter():
         id = slothql.ID()
 
     class Query(slothql.Object):
-        foos = slothql.Field(Foo, many=True, filterable=True)
+        foos = slothql.Field(Foo, many=True)
 
     error = {'message': 'Argument "filter" has invalid value {id: {wtf: 1}}.\n'
                         'In field "id": Expected type "ID", found {wtf: 1}.'}
