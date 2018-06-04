@@ -80,14 +80,11 @@ class Field:
     @property
     def arguments(self) -> t.Optional:
         if issubclass(self.of_type, types.Object) and self.filterable:
-            r = {
+            return {
                 'filter': self.of_type.filter_class,
                 # 'pagination': {},  # TODO
                 # 'ordering': {},  # TODO
             }
-            if not r['filter']._meta.fields:
-                return {}  # FIXME: happens for Objects with Field referencing only other Objects
-            return r
         return {}
 
     def resolve(self, resolver: t.Optional[Resolver], obj, info: graphql.ResolveInfo, **kwargs):

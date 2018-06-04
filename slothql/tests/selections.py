@@ -1,9 +1,9 @@
 from graphql.language import ast
 
-from ..selections import selections_to_dict
+from ..selections import Selection
 
 
-def test_get_selections_to_dict():
+def test_selections_from_ast():
     selections = [
         ast.Field(name='foo'),
         ast.Field(name='nested', selection_set=ast.SelectionSet([
@@ -14,4 +14,12 @@ def test_get_selections_to_dict():
         ])),
     ]
 
-    assert {'foo': None, 'nested': {'bar': None, 'more_nested': {'baz': None}}} == selections_to_dict(selections)
+    assert frozenset((
+        Selection(field_name='foo'),
+        Selection(field_name='nested', selections=frozenset((
+            Selection(field_name='bar'),
+            Selection(field_name='more_nested', selections=frozenset((
+                Selection(field_name='baz'),
+            ))),
+        ))),
+    )) == Selection.from_ast(selections)

@@ -77,15 +77,27 @@ class TestInitializeFilter:
 
 def test_nested_filters():
     class Foo(slothql.Object):
-        foo_id = slothql.ID()
+        id = slothql.ID()
 
     class Bar(slothql.Object):
-        bar_id = slothql.ID()
+        id = slothql.ID()
         foo = slothql.Field(Foo)
 
     filter_class: t.Type[filter.Filter] = Bar.filter_class
     assert issubclass(filter_class, filter.Filter)
-    assert {'foo', 'bar_id'} == filter_class._meta.fields.keys()
+    assert {'foo', 'id'} == filter_class._meta.fields.keys()
 
     nested_filter_class = filter_class._meta.fields.get('foo').of_type
     assert nested_filter_class is Foo.filter_class
+
+
+def test_duplicate_references():
+    class Foo(slothql.Object):
+        id = slothql.ID()
+
+    class Bar(slothql.Object):
+        foo_one = slothql.Field(Foo)
+        foo_two = slothql.Field(Foo)
+
+    foo_one_filter_cls, foo_two_filter_cls = [f.of_type for f in Bar.filter_class._meta.fields.values()]
+    assert foo_one_filter_cls is foo_two_filter_cls

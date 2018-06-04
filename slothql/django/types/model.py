@@ -5,6 +5,8 @@ import graphql
 from django.db import models
 
 from slothql import Field
+from slothql.django.queryset import select_related
+from slothql.selections import get_selections
 from slothql.types.fields.resolver import ResolveArgs
 from slothql.types.object import Object, ObjectMeta, ObjectOptions
 from slothql.django.utils.model import get_model_attrs
@@ -100,6 +102,7 @@ class Model(Object, metaclass=ModelMeta):
     def resolve(cls, resolved: t.Iterable, info: graphql.ResolveInfo, args: ResolveArgs, many: bool) -> t.Iterable:
         if resolved is None:
             queryset: models.QuerySet = cls._meta.model._default_manager.get_queryset()
+            queryset = select_related(queryset, get_selections(info))
         else:
             queryset = resolved.get_queryset() if isinstance(resolved, models.Manager) else resolved
         queryset = super().resolve(queryset, info, args, many)

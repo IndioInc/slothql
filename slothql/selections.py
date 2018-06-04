@@ -1,22 +1,27 @@
-from typing import List, Dict, Optional
+import typing as t
 
 import graphql
 from graphql.language import ast
 
+from .types.fields.filter import Filter
 
-Selections = Dict[str, Optional[dict]]
-
-
-def get_selection_set(info: graphql.ResolveInfo) -> ast.SelectionSet:
-    return info.operation.selection_set
+Selections = t.Dict[str, t.Optional[dict]]
 
 
-def selections_to_dict(selections: List[ast.Field]) -> Selections:
-    return {
-        field.name: selections_to_dict(field.selection_set.selections) if field.selection_set else None
-        for field in selections
-    }
+class Selection(t.NamedTuple):
+    field_name: str
+    filter = Filter.SKIP
+    selections: t.FrozenSet['Selection'] = None
+
+    @classmethod
+    def from_ast(cls, ast_fields: t.Iterable[ast.Field]) -> t.FrozenSet['Selection']:
+        return frozenset(
+            Selection(
+                field_name=field.name,
+                selections=field.selection_set and cls.from_ast(field.selection_set.selections),
+            ) for field in ast_fields
+        )
 
 
-def get_selector(info: graphql.ResolveInfo):
-    return selections_to_dict(get_selection_set(info).selections)
+def get_selections(info: graphql.ResolveInfo) -> t.FrozenSet[Selection]:
+    return Selection.from_ast(info.operation.selection_set.selections)

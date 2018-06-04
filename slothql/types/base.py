@@ -72,7 +72,7 @@ class BaseType(metaclass=BaseMeta):
         return super().__new__(cls)
 
     def __init__(self):
-        raise NotImplementedError('BaseType initialization is not supported yet')
+        raise RuntimeError(f'`{self.__class__.__name__}` initialization is not supported')
 
     def __repr__(self):
         return self.__class__.__name__
