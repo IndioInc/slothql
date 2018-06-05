@@ -40,7 +40,7 @@ class ObjectMeta(FieldMetaMixin, BaseMeta):
         return Filter.create_class(cls._meta.name + 'Filter', fields={
             name:
                 Field(
-                    of_type=(lambda: field.of_type.filter_class if issubclass(field.of_type, Object)
+                    of_type=(lambda field=field: field.of_type.filter_class if issubclass(field.of_type, Object)
                              else field.of_type),
                     many=field.many,
                     null=field.null,

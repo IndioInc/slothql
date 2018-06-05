@@ -45,3 +45,9 @@ def select_related(queryset: models.QuerySet, selections: t.Iterable[Selection])
     return queryset.select_related(*(
         relation.name for relation in Relation.get_selectable(model=queryset.model) if relation.name in fields
     ))
+
+
+def prefetch_related(queryset: models.QuerySet, selections: t.Iterable[Selection]) -> models.QuerySet:
+    fields = [s.field_name for s in selections]
+    return queryset.prefetch_related(
+    )

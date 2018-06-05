@@ -5,7 +5,7 @@ import graphql
 from django.db import models
 
 from slothql import Field
-from slothql.django.queryset import select_related
+from slothql.django.queryset import select_related, prefetch_related
 from slothql.selections import get_selections
 from slothql.types.fields.resolver import ResolveArgs
 from slothql.types.object import Object, ObjectMeta, ObjectOptions
@@ -82,7 +82,7 @@ class ModelMeta(ObjectMeta):
         return DjangoFilter.create_class(cls._meta.name + 'Filter', fields={
             name:
                 Field(
-                    of_type=(field.of_type.filter_class if issubclass(field.of_type, Model)
+                    of_type=(lambda field=field: field.of_type.filter_class if issubclass(field.of_type, Model)
                              else field.of_type),
                     many=field.many,
                     null=field.null,
@@ -102,7 +102,9 @@ class Model(Object, metaclass=ModelMeta):
     def resolve(cls, resolved: t.Iterable, info: graphql.ResolveInfo, args: ResolveArgs, many: bool) -> t.Iterable:
         if resolved is None:
             queryset: models.QuerySet = cls._meta.model._default_manager.get_queryset()
-            queryset = select_related(queryset, get_selections(info))
+            selections = get_selections(info)
+            queryset = select_related(queryset, selections)
+            queryset = prefetch_related(queryset, selections)
         else:
             queryset = resolved.get_queryset() if isinstance(resolved, models.Manager) else resolved
         queryset = super().resolve(queryset, info, args, many)

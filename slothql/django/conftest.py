@@ -4,6 +4,7 @@ from unittest import mock
 from django.db import models
 
 
+@pytest.fixture()
 def queryset(**kwargs):
     queryset_instance = mock.Mock(
         spec=models.QuerySet,
