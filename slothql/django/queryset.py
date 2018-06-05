@@ -43,6 +43,5 @@ def apply_selections(queryset: models.QuerySet, selections: t.Iterable[Selection
 def select_related(queryset: models.QuerySet, selections: t.Iterable[Selection]) -> models.QuerySet:
     fields = [s.field_name for s in selections]
     return queryset.select_related(*(
-        relation.name for relation in Relation.get_selectable(model=queryset.model)
-        if relation.name in fields
+        relation.name for relation in Relation.get_selectable(model=queryset.model) if relation.name in fields
     ))

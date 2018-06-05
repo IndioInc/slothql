@@ -17,11 +17,11 @@ class Selection(t.NamedTuple):
     def from_ast(cls, ast_fields: t.Iterable[ast.Field]) -> t.FrozenSet['Selection']:
         return frozenset(
             Selection(
-                field_name=field.name,
+                field_name=field.name.value,
                 selections=field.selection_set and cls.from_ast(field.selection_set.selections),
             ) for field in ast_fields
         )
 
 
 def get_selections(info: graphql.ResolveInfo) -> t.FrozenSet[Selection]:
-    return Selection.from_ast(info.operation.selection_set.selections)
+    return Selection.from_ast(info.field_asts[0].selection_set.selections)

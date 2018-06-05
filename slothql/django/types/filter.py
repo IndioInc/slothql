@@ -22,7 +22,7 @@ class DjangoFilter(Filter, metaclass=DjangoFilterMeta):
     _meta: DjangoFilterOptions
 
     def apply(self, queryset: models.QuerySet) -> models.QuerySet:
-        assert isinstance(queryset, models.QuerySet), f'Expected QuerySet, but received {queryset}'
+        # assert isinstance(queryset, models.QuerySet), f'Expected QuerySet, but received {queryset}'
         for field, value in self.filter_fields.items():
             if isinstance(value, dict):
                 continue

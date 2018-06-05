@@ -5,11 +5,11 @@ from ..selections import Selection
 
 def test_selections_from_ast():
     selections = [
-        ast.Field(name='foo'),
-        ast.Field(name='nested', selection_set=ast.SelectionSet([
-            ast.Field(name='bar'),
-            ast.Field(name='more_nested', selection_set=ast.SelectionSet(selections=[
-                ast.Field(name='baz'),
+        ast.Field(ast.Name(value='foo')),
+        ast.Field(ast.Name(value='nested'), selection_set=ast.SelectionSet([
+            ast.Field(ast.Name(value='bar')),
+            ast.Field(ast.Name(value='more_nested'), selection_set=ast.SelectionSet(selections=[
+                ast.Field(ast.Name(value='baz')),
             ])),
         ])),
     ]

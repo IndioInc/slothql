@@ -106,6 +106,6 @@ class Model(Object, metaclass=ModelMeta):
         else:
             queryset = resolved.get_queryset() if isinstance(resolved, models.Manager) else resolved
         queryset = super().resolve(queryset, info, args, many)
-        if not many:
+        if not many and isinstance(queryset, models.QuerySet):
             return queryset.get()
         return queryset

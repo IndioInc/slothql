@@ -10,7 +10,18 @@ class Relation(t.NamedTuple):
 
     @classmethod
     def get_selectable(cls, model: t.Type[models.Model]) -> t.Iterable['Relation']:
-        yield from (Relation(name=field.name, model=field.related_model) for field in model._meta.get_fields())
+        yield from (
+            Relation(name=field.name, model=field.related_model)
+            for field in model._meta.get_fields() if field_is_selectable(field)
+        )
+
+
+def field_is_selectable(field: models.Field) -> bool:
+    return isinstance(field, models.ForeignKey)
+
+
+def field_is_prefetchable(field: models.Field) -> bool:
+    raise NotImplementedError
 
 
 def get_model_attrs(model: t.Type[models.Model]) -> dict:
