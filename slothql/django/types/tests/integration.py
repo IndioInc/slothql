@@ -68,14 +68,13 @@ class TestNestedFilters:
 
         queryset.filter.assert_called_once_with(id=1)
 
-    @pytest.mark.xfail
     def test_prefetch_related(self, queryset_factory):
         queryset = queryset_factory(model=self.FooModel)
         with mock.patch.object(self.FooModel._default_manager, 'get_queryset', return_value=queryset):
             slothql.gql(self.schema, 'query { foos { bars { id } } }')
 
         queryset.prefetch_related.assert_called_once_with(
-            models.Prefetch('bars', queryset=self.FooModel._default_manager.get_queryset())
+            models.Prefetch('bars', queryset=self.FooModel._default_manager.get_queryset()),
         )
 
     @pytest.mark.xfail

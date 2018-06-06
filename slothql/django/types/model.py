@@ -1,15 +1,14 @@
 import inspect
 import typing as t
 
-import graphql
 from django.db import models
 
-from slothql import Field
+import slothql
 from slothql.django.queryset import select_related, prefetch_related
 from slothql.selections import get_selections
 from slothql.types.fields.resolver import ResolveArgs
 from slothql.types.object import Object, ObjectMeta, ObjectOptions
-from slothql.django.utils.model import get_model_attrs
+from slothql.django import utils
 
 from .registry import TypeRegistry
 from .filter import DjangoFilter
@@ -40,7 +39,7 @@ class ModelMeta(ObjectMeta):
         return super().get_option_attrs(class_name, base_attrs, attrs, meta_attrs)
 
     @classmethod
-    def get_meta_fields(mcs, model: t.Type[models.Model], fields: t.Union[str, t.Iterable[str]]) -> t.Dict[str, Field]:
+    def get_meta_fields(mcs, model: t.Type[models.Model], fields: t.Union[str, t.Iterable[str]]) -> t.Dict[str, slothql.Field]:
         assert fields == '__all__' or isinstance(fields, t.Iterable) and all(isinstance(f, str) for f in fields), \
             f'Meta.fields needs to be an iterable of field names or "__all__", but received {fields}'
         assert model, f'Meta.model is required when using Meta.fields'
@@ -54,7 +53,7 @@ class ModelMeta(ObjectMeta):
     @classmethod
     def resolve_attr_list(mcs, model: t.Type[models.Model], fields: t.Iterable[str]) -> dict:
         attrs = {}
-        model_attrs = get_model_attrs(model)
+        model_attrs = utils.get_model_attrs(model)
         for name in fields:
             assert name in model_attrs, f'"{name}" is not a valid field for model "{model.__name__}"'
         for name, attr in model_attrs.items():
@@ -66,22 +65,15 @@ class ModelMeta(ObjectMeta):
         return attrs
 
     @classmethod
-    def resolve_all_fields(mcs, model: t.Type[models.Model]) -> dict:
-        return {
-            name: attr for name, attr in get_model_attrs(model).items()
-            if not isinstance(attr, TypeRegistry.RELATION_TYPES)
-        }
-
-    @classmethod
     def get_attrs(mcs, model: t.Type[models.Model], fields: t.Union[str, t.Iterable[str]]) -> dict:
         if fields == '__all__':
-            return mcs.resolve_all_fields(model)
+            return utils.get_non_relational_fields(model)
         return mcs.resolve_attr_list(model, fields)
 
     def get_filter_class(cls) -> t.Type[DjangoFilter]:
         return DjangoFilter.create_class(cls._meta.name + 'Filter', fields={
             name:
-                Field(
+                slothql.Field(
                     of_type=(lambda field=field: field.of_type.filter_class if issubclass(field.of_type, Model)
                              else field.of_type),
                     many=field.many,
@@ -99,7 +91,7 @@ class Model(Object, metaclass=ModelMeta):
         abstract = True
 
     @classmethod
-    def resolve(cls, resolved: t.Iterable, info: graphql.ResolveInfo, args: ResolveArgs, many: bool) -> t.Iterable:
+    def resolve(cls, resolved: t.Iterable, info: slothql.ResolveInfo, args: ResolveArgs, many: bool) -> t.Iterable:
         if resolved is None:
             queryset: models.QuerySet = cls._meta.model._default_manager.get_queryset()
             selections = get_selections(info)

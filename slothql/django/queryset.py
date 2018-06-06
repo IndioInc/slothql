@@ -3,6 +3,7 @@ import typing as t
 from django.db import models
 
 from slothql.selections import Selections, Selection
+
 from .utils.model import get_selectable_relations, get_relations, Relation
 
 
@@ -49,5 +50,6 @@ def select_related(queryset: models.QuerySet, selections: t.Iterable[Selection])
 
 def prefetch_related(queryset: models.QuerySet, selections: t.Iterable[Selection]) -> models.QuerySet:
     fields = [s.field_name for s in selections]
-    return queryset.prefetch_related(
-    )
+    return queryset.prefetch_related(*(
+        relation.name for relation in Relation.get_prefetchable(model=queryset.model) if relation.name in fields
+    ))
