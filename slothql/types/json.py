@@ -21,4 +21,6 @@ class JsonStringType(StringType):
         try:
             return json.dumps(cls.replace_set_with_dict(value))
         except TypeError:
-            raise TypeError(f'`{cls.__name__}.serialize` received invalid value {repr(value)}')
+            raise TypeError(
+                f"`{cls.__name__}.serialize` received invalid value {repr(value)}"
+            )

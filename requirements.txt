@@ -5,15 +5,15 @@ cached-property==1.4
 django==2.0
 psycopg2-binary>=2.7<3
 
-# development
+# testing
 pytest
 pytest-cov
 pytest-django
 
+# QA
 flake8
 flake8-comprehensions
-flake8-commas
-flake8-quotes
+black
 
 # documentation
 sphinx

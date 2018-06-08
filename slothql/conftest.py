@@ -18,18 +18,19 @@ def pytest_configure():
 
 # setup for @pytest.mark.incremental
 
+
 def pytest_runtest_makereport(item, call):
-    if 'incremental' in item.keywords:
+    if "incremental" in item.keywords:
         if call.excinfo is not None and not item._skipped_by_mark:
             parent = item.parent
             parent._previousfailed = item
 
 
 def pytest_runtest_setup(item):
-    if 'incremental' in item.keywords:
-        previousfailed = getattr(item.parent, '_previousfailed', None)
+    if "incremental" in item.keywords:
+        previousfailed = getattr(item.parent, "_previousfailed", None)
         if previousfailed is not None:
-            pytest.xfail(f'previous test failed ({previousfailed.name})')
+            pytest.xfail(f"previous test failed ({previousfailed.name})")
 
 
 @pytest.fixture()
@@ -49,13 +50,23 @@ def resolver_mock():
 
 @pytest.fixture()
 def field_mock(resolver_mock):
-    return mock.Mock(spec=slothql.Field, _resolver=resolver_mock, description=None, source=None, many=False,
-                     filterable=False)
+    return mock.Mock(
+        spec=slothql.Field,
+        _resolver=resolver_mock,
+        description=None,
+        source=None,
+        many=False,
+        filterable=False,
+    )
 
 
 @pytest.fixture()
 def partials_equal():
-    return lambda p1, p2: p1.func == p2.func and p1.args == p2.args and p1.keywords == p2.keywords
+    return (
+        lambda p1, p2: p1.func == p2.func
+        and p1.args == p2.args
+        and p1.keywords == p2.keywords
+    )
 
 
 @pytest.fixture()
@@ -75,12 +86,14 @@ def schema_mock():
 
 @pytest.fixture()
 def operation_mock():
-    return mock.Mock(spec=slothql.Operation, query='foo', variables={}, operation_name='baz')
+    return mock.Mock(
+        spec=slothql.Operation, query="foo", variables={}, operation_name="baz"
+    )
 
 
 @pytest.fixture()
 def hello_schema():
     class Query(slothql.Object):
-        hello = slothql.String(resolver=lambda: 'world')
+        hello = slothql.String(resolver=lambda: "world")
 
     return slothql.Schema(query=Query)

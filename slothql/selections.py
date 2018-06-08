@@ -34,13 +34,21 @@ class FilterExpression(t.NamedTuple):
                     for expression in cls.from_object_value(field.value)
                 )
             elif isinstance(field.value, ast.IntValue):
-                yield FilterExpression(path=field.name.value, value=int(field.value.value))
+                yield FilterExpression(
+                    path=field.name.value, value=int(field.value.value)
+                )
             elif isinstance(field.value, ast.FloatValue):
-                yield FilterExpression(path=field.name.value, value=float(field.value.value))
+                yield FilterExpression(
+                    path=field.name.value, value=float(field.value.value)
+                )
             elif isinstance(field.value, ast.BooleanValue):
-                yield FilterExpression(path=field.name.value, value=bool(field.value.value))
+                yield FilterExpression(
+                    path=field.name.value, value=bool(field.value.value)
+                )
             elif isinstance(field.value, ast.StringValue):
-                yield FilterExpression(path=field.name.value, value=str(field.value.value))
+                yield FilterExpression(
+                    path=field.name.value, value=str(field.value.value)
+                )
             else:
                 raise NotImplementedError(field)
 
@@ -90,5 +98,10 @@ class ResolveInfo(t.NamedTuple):
     @classmethod
     def from_info(cls, info: graphql.ResolveInfo) -> "ResolveInfo":
         return ResolveInfo(
-            field_name=info.field_name, selection=next(s for s in Selection.from_ast_fields(info.field_asts) if s.field_name == info.field_name)
+            field_name=info.field_name,
+            selection=next(
+                s
+                for s in Selection.from_ast_fields(info.field_asts)
+                if s.field_name == info.field_name
+            ),
         )

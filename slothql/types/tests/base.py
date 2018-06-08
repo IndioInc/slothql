@@ -3,10 +3,9 @@ import pytest
 from slothql.types.base import BaseType
 
 
-@pytest.mark.parametrize('type_name, expected_name', (
-        ('Foo', 'Foo'),
-        (None, 'FooType'),
-))
+@pytest.mark.parametrize(
+    "type_name, expected_name", (("Foo", "Foo"), (None, "FooType"))
+)
 def test_meta_name(type_name, expected_name):
     class FooType(BaseType):
         class Meta:

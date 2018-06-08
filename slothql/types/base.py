@@ -5,7 +5,7 @@ from slothql.utils import is_magic_name, get_attr_fields
 
 
 class BaseOptions:
-    __slots__ = 'parent', 'abstract', 'name', 'description'
+    __slots__ = "parent", "abstract", "name", "description"
     abstract: bool
     name: str
     description: str
@@ -21,26 +21,40 @@ class BaseOptions:
             try:
                 setattr(self, name, value)
             except AttributeError:
-                raise AttributeError(f'Meta received an unexpected attribute "{name} = {value}"')
+                raise AttributeError(
+                    f'Meta received an unexpected attribute "{name} = {value}"'
+                )
 
 
 class BaseMeta(type):
-    def __new__(mcs, name: str, bases: t.Tuple[type], attrs: dict,
-                options_class: t.Type[BaseOptions] = BaseOptions, **kwargs):
-        assert 'Meta' not in attrs or inspect.isclass(attrs['Meta']), 'attribute Meta has to be a class'
+    def __new__(
+        mcs,
+        name: str,
+        bases: t.Tuple[type],
+        attrs: dict,
+        options_class: t.Type[BaseOptions] = BaseOptions,
+        **kwargs,
+    ):
+        assert "Meta" not in attrs or inspect.isclass(
+            attrs["Meta"]
+        ), "attribute Meta has to be a class"
         cls: BaseMeta = super().__new__(mcs, name, bases, attrs)
         base_option = cls.merge_options(*mcs.get_options_bases(bases))
-        meta_attrs = get_attr_fields(attrs['Meta']) if 'Meta' in attrs else {}
+        meta_attrs = get_attr_fields(attrs["Meta"]) if "Meta" in attrs else {}
         cls._meta = options_class(
-            **cls.merge_options(base_option, cls.get_option_attrs(name, base_option, attrs, meta_attrs)),
+            **cls.merge_options(
+                base_option, cls.get_option_attrs(name, base_option, attrs, meta_attrs)
+            )
         )
         return cls
 
-    def get_option_attrs(cls, name: str, base_attrs: dict, attrs: dict, meta_attrs: dict) -> dict:
+    def get_option_attrs(
+        cls, name: str, base_attrs: dict, attrs: dict, meta_attrs: dict
+    ) -> dict:
         defaults = {
-            'parent': cls,
-            'name': meta_attrs.get('name') or name,
-            'abstract': meta_attrs.get('abstract', False),
+            "parent": cls,
+            "name": meta_attrs.get("name") or name,
+            "abstract": meta_attrs.get("abstract", False),
         }
         return {**meta_attrs, **defaults}
 
@@ -55,7 +69,8 @@ class BaseMeta(type):
     def get_options_bases(mcs, bases: t.Tuple[type]) -> t.Iterable[dict]:
         yield from (
             get_attr_fields(base._meta)
-            for base in reversed(bases) if hasattr(base, '_meta') and isinstance(base._meta, BaseOptions)
+            for base in reversed(bases)
+            if hasattr(base, "_meta") and isinstance(base._meta, BaseOptions)
         )
 
     @classmethod
@@ -68,11 +83,15 @@ class BaseMeta(type):
 class BaseType(metaclass=BaseMeta):
     @staticmethod
     def __new__(cls, *more, **kwargs):
-        assert not cls._meta.abstract, f'Abstract type {cls.__name__} can not be instantiated'
+        assert (
+            not cls._meta.abstract
+        ), f"Abstract type {cls.__name__} can not be instantiated"
         return super().__new__(cls)
 
     def __init__(self):
-        raise RuntimeError(f'`{self.__class__.__name__}` initialization is not supported')
+        raise RuntimeError(
+            f"`{self.__class__.__name__}` initialization is not supported"
+        )
 
     def __repr__(self):
         return self.__class__.__name__
@@ -83,6 +102,7 @@ LazyType = t.Union[t.Type[BaseType], t.Callable]
 
 def resolve_lazy_type(lazy_type: LazyType) -> t.Type[BaseType]:
     resolved = lazy_type() if inspect.isfunction(lazy_type) else lazy_type
-    assert inspect.isclass(resolved) and issubclass(resolved, BaseType), \
-        f'"lazy_type" needs to inherit from BaseType or be a lazy reference, not {lazy_type}'
+    assert inspect.isclass(resolved) and issubclass(
+        resolved, BaseType
+    ), f'"lazy_type" needs to inherit from BaseType or be a lazy reference, not {lazy_type}'
     return resolved

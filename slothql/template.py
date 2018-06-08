@@ -13,5 +13,5 @@ def resolve_path(template: str) -> str:
 
 
 def get_template_string(path: str):
-    with open(resolve_path(path), 'r') as file:
+    with open(resolve_path(path), "r") as file:
         return file.read()

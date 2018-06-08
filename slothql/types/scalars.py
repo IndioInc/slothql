@@ -17,7 +17,7 @@ MIN_SAFE_INTEGER = -MAX_SAFE_INTEGER
 
 class IntegerType(ScalarType):
     class Meta:
-        name = 'Integer'
+        name = "Integer"
         description = scalars.GraphQLInt.description
 
     @classmethod
@@ -27,48 +27,56 @@ class IntegerType(ScalarType):
         if isinstance(value, int) and not isinstance(value, bool):
             if MIN_SAFE_INTEGER <= value <= MAX_SAFE_INTEGER:
                 return value
-        raise TypeError(f'`{cls.__name__}.serialize` received invalid value {repr(value)}')
+        raise TypeError(
+            f"`{cls.__name__}.serialize` received invalid value {repr(value)}"
+        )
 
 
 class FloatType(ScalarType):
     class Meta:
-        name = 'Float'
+        name = "Float"
         description = scalars.GraphQLFloat.description
 
     @classmethod
     def serialize(cls, value) -> t.Optional[float]:
         if value is None or isinstance(value, float):
             return value
-        raise TypeError(f'`{cls.__name__}.serialize` received invalid value {repr(value)}')
+        raise TypeError(
+            f"`{cls.__name__}.serialize` received invalid value {repr(value)}"
+        )
 
 
 class StringType(ScalarType):
     class Meta:
-        name = 'String'
+        name = "String"
         description = scalars.GraphQLString.description
 
     @classmethod
     def serialize(cls, value) -> t.Optional[str]:
         if value is None or isinstance(value, str):
             return value
-        raise TypeError(f'`{cls.__name__}.serialize` received invalid value {repr(value)}')
+        raise TypeError(
+            f"`{cls.__name__}.serialize` received invalid value {repr(value)}"
+        )
 
 
 class BooleanType(ScalarType):
     class Meta:
-        name = 'Boolean'
+        name = "Boolean"
         description = scalars.GraphQLBoolean.description
 
     @classmethod
     def serialize(cls, value) -> t.Optional[bool]:
         if value is None or isinstance(value, bool):
             return value
-        raise TypeError(f'`{cls.__name__}.serialize` received invalid value {repr(value)}')
+        raise TypeError(
+            f"`{cls.__name__}.serialize` received invalid value {repr(value)}"
+        )
 
 
 class IDType(ScalarType):
     class Meta:
-        name = 'ID'
+        name = "ID"
         description = scalars.GraphQLID.description
 
     @classmethod
@@ -78,10 +86,14 @@ class IDType(ScalarType):
         try:
             return IntegerType.serialize(value)
         except TypeError:
-            raise TypeError(f'`{cls.__name__}.serialize` received invalid value {repr(value)}')
+            raise TypeError(
+                f"`{cls.__name__}.serialize` received invalid value {repr(value)}"
+            )
 
 
-def patch_default_scalar(scalar_type: t.Type[ScalarType], graphql_type: scalars.GraphQLScalarType):
+def patch_default_scalar(
+    scalar_type: t.Type[ScalarType], graphql_type: scalars.GraphQLScalarType
+):
     graphql_type.name = scalar_type._meta.name
     graphql_type.description = scalar_type._meta.description
     graphql_type.serialize = scalar_type.serialize

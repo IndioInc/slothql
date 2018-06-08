@@ -11,12 +11,14 @@ def test_circular_dependency():
         field = slothql.String()
 
     class Query(slothql.Object):
-        root = slothql.Field(A, resolver=lambda: {'b': {'a': {'field': 'foo'}}})
+        root = slothql.Field(A, resolver=lambda: {"b": {"a": {"field": "foo"}}})
 
     schema = slothql.Schema(query=Query)
 
-    query = 'query { root { b { a { field } } } }'
-    assert {'data': {'root': {'b': {'a': {'field': 'foo'}}}}} == slothql.gql(schema, query)
+    query = "query { root { b { a { field } } } }"
+    assert {"data": {"root": {"b": {"a": {"field": "foo"}}}}} == slothql.gql(
+        schema, query
+    )
 
 
 def test_static_circular_dependency():
@@ -25,17 +27,17 @@ def test_static_circular_dependency():
         field = slothql.String()
 
     class Query(slothql.Object):
-        root = slothql.Field(A, resolver=lambda: {'a': {'field': 'foo'}})
+        root = slothql.Field(A, resolver=lambda: {"a": {"field": "foo"}})
 
     schema = slothql.Schema(query=Query)
 
-    query = 'query { root { a { field } } }'
-    assert {'data': {'root': {'a': {'field': 'foo'}}}} == slothql.gql(schema, query)
+    query = "query { root { a { field } } }"
+    assert {"data": {"root": {"a": {"field": "foo"}}}} == slothql.gql(schema, query)
 
 
 def test_circular_self_dependency():
     class Foo(slothql.Object):
-        foo = slothql.Field('self')
+        foo = slothql.Field("self")
 
     class Bar(Foo):
         pass

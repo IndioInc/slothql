@@ -9,7 +9,7 @@ class TestSchema:
     @classmethod
     def setup_class(cls):
         class Query(slothql.Object):
-            hello = slothql.String(resolver=lambda *_: 'world')
+            hello = slothql.String(resolver=lambda *_: "world")
 
         cls.query_class = Query
 
@@ -21,40 +21,50 @@ class TestSchema:
 
     def test_execution(self):
         schema = slothql.Schema(query=self.query_class)
-        query = 'query { hello }'
-        assert {'data': {'hello': 'world'}} == slothql.gql(schema, query)
+        query = "query { hello }"
+        assert {"data": {"hello": "world"}} == slothql.gql(schema, query)
 
     def test_complex_schema(self):
         class Nested(slothql.Object):
-            nested = slothql.Field(self.query_class, resolver=lambda *_: {'world': 'not hello'})
+            nested = slothql.Field(
+                self.query_class, resolver=lambda *_: {"world": "not hello"}
+            )
 
-        query = 'query { nested { hello } }'
-        assert {'data': {'nested': {'hello': 'world'}}} == slothql.gql(slothql.Schema(query=Nested), query)
+        query = "query { nested { hello } }"
+        assert {"data": {"nested": {"hello": "world"}}} == slothql.gql(
+            slothql.Schema(query=Nested), query
+        )
 
     def test_nested_in_null(self):
         class Nested(slothql.Object):
             nested = slothql.Field(self.query_class, resolver=lambda *_: None)
 
-        query = 'query { nested { hello } }'
-        assert {'data': {'nested': None}} == slothql.gql(slothql.Schema(query=Nested), query)
+        query = "query { nested { hello } }"
+        assert {"data": {"nested": None}} == slothql.gql(
+            slothql.Schema(query=Nested), query
+        )
 
 
 def test_camelcase_schema_integration__queries():
     class FooBar(slothql.Object):
         foo_bar = slothql.Field(lambda: FooBar, resolver=lambda: {})
-        some_weird_field = slothql.String(resolver=lambda: 'some weird field')
+        some_weird_field = slothql.String(resolver=lambda: "some weird field")
 
     class Query(slothql.Object):
-        string_field = slothql.String(resolver=lambda: 'string field')
+        string_field = slothql.String(resolver=lambda: "string field")
         foo_bar = slothql.Field(FooBar, resolver=lambda: {})
 
     schema = slothql.Schema(query=Query, auto_camelcase=True)
-    assert {'data': {'stringField': 'string field', 'fooBar': {'someWeirdField': 'some weird field'}}} \
-        == slothql.gql(schema, 'query { stringField fooBar { someWeirdField } }')
+    assert {
+        "data": {
+            "stringField": "string field",
+            "fooBar": {"someWeirdField": "some weird field"},
+        }
+    } == slothql.gql(schema, "query { stringField fooBar { someWeirdField } }")
 
     # shouldn't modify the actual types
-    assert {'string_field', 'foo_bar'} == Query._meta.fields.keys()
-    assert {'some_weird_field', 'foo_bar'} == FooBar._meta.fields.keys()
+    assert {"string_field", "foo_bar"} == Query._meta.fields.keys()
+    assert {"some_weird_field", "foo_bar"} == FooBar._meta.fields.keys()
 
 
 def test_camelcase_schema_integration__introspection_query():
@@ -62,21 +72,28 @@ def test_camelcase_schema_integration__introspection_query():
         field = slothql.String()
 
     schema = slothql.Schema(query=Query, auto_camelcase=True)
-    assert 'errors' not in slothql.gql(schema, graphql.introspection_query)
+    assert "errors" not in slothql.gql(schema, graphql.introspection_query)
 
 
-@pytest.mark.parametrize('camel_case, field_name', (
-        (True, 'camelCaseField'),
+@pytest.mark.parametrize(
+    "camel_case, field_name",
+    (
+        (True, "camelCaseField"),
         # (False, 'camel_case_field'),
-))
+    ),
+)
 def test_camelcase_schema_integration__filters(camel_case, field_name):
     class Foo(slothql.Object):
         camel_case_field = slothql.String()
 
     class Query(slothql.Object):
-        foo = slothql.Field(Foo, many=True, resolver=lambda: [{'camel_case_field': 'foo'}, {'camel_case_field': 'bar'}])
+        foo = slothql.Field(
+            Foo,
+            many=True,
+            resolver=lambda: [{"camel_case_field": "foo"}, {"camel_case_field": "bar"}],
+        )
 
     schema = slothql.Schema(Query, auto_camelcase=camel_case)
 
     query = f'query {{ foo(filter: {{ {field_name}: "foo" }}) {{ {field_name} }} }}'
-    assert {'data': {'foo': [{field_name: 'foo'}]}} == slothql.gql(schema, query)
+    assert {"data": {"foo": [{field_name: "foo"}]}} == slothql.gql(schema, query)

@@ -1,4 +1,7 @@
-lazy_proxy_attrs = ['_LazyInitProxy' + i for i in ('__obj', '__new', '__cls', '__args', '__kwargs', '__lazy_init')]
+lazy_proxy_attrs = [
+    "_LazyInitProxy" + i
+    for i in ("__obj", "__new", "__cls", "__args", "__kwargs", "__lazy_init")
+]
 
 
 class LazyInitProxy:
@@ -15,7 +18,7 @@ class LazyInitProxy:
             self.__obj.__init__(*self.__args, **self.__kwargs)
 
     def __getattribute__(self, name):
-        if name is '__class__':
+        if name is "__class__":
             return self.__cls
         if name in lazy_proxy_attrs:
             return super().__getattribute__(name)

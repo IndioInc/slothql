@@ -7,4 +7,5 @@ from .test_registry import TypeRegistry
 def type_registry():
     class TestTypeRegistry(TypeRegistry):
         pass
+
     return TestTypeRegistry()

@@ -1,10 +1,7 @@
 from .model import Model
 from .filter import DjangoFilter
 
-__all__ = (
-    'Model',
-    'DjangoFilter',
-)
+__all__ = ("Model", "DjangoFilter")
 
 from django.db import models
 

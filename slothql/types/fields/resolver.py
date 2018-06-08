@@ -17,7 +17,9 @@ PartialResolver = t.Union[
 Resolver = t.Callable[[t.Any, graphql.ResolveInfo, ResolveArgs], t.Any]
 
 
-def _get_function(field, resolver: PartialResolver = None) -> t.Optional[PartialResolver]:
+def _get_function(
+    field, resolver: PartialResolver = None
+) -> t.Optional[PartialResolver]:
     if resolver is None:
         return None
     if isinstance(resolver, staticmethod):
@@ -31,8 +33,11 @@ def _get_function(field, resolver: PartialResolver = None) -> t.Optional[Partial
 
 def _inject_missing_args(func: PartialResolver) -> Resolver:
     signature, arg_count = get_function_signature(func)
-    assert arg_count <= 3, f'{func} expected arguments to be of signature (parent, info, args), received {signature}'
+    assert (
+        arg_count <= 3
+    ), f"{func} expected arguments to be of signature (parent, info, args), received {signature}"
     if arg_count < 3:
+
         @functools.wraps(func)
         def resolver(parent, info, args):
             if arg_count == 0:
@@ -51,4 +56,6 @@ def get_resolver(field, resolver: PartialResolver) -> t.Optional[Resolver]:
 
 
 def is_valid_resolver(resolver: PartialResolver) -> bool:
-    return inspect.isfunction(resolver) or isinstance(resolver, (classmethod, staticmethod))
+    return inspect.isfunction(resolver) or isinstance(
+        resolver, (classmethod, staticmethod)
+    )
