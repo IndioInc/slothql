@@ -1,6 +1,6 @@
 import pytest
 
-from .registry import TypeRegistry
+from .test_registry import TypeRegistry
 
 
 @pytest.fixture()

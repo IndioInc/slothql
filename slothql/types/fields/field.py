@@ -68,8 +68,12 @@ class Field:
     @property
     def of_type(self) -> t.Type[BaseType]:
         if self._type == 'self':
-            return self.parent
-        return resolve_lazy_type(self._type)
+            resolved_type = self.parent
+        else:
+            resolved_type = resolve_lazy_type(self._type)
+        if issubclass(resolved_type, types.Object):
+            resolved_type.validate_field(self, resolved_type)
+        return resolved_type
 
     @property
     def resolver(self) -> Resolver:

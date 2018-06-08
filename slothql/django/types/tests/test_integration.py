@@ -16,7 +16,7 @@ class TestNestedFilters:
                 app_label = 'slothql'
 
         class BarModel(models.Model):
-            foo = models.OneToOneField(FooModel, models.CASCADE)
+            foo = models.OneToOneField(FooModel, models.CASCADE, related_name='bars')
 
             class Meta:
                 app_label = 'slothql'
@@ -61,12 +61,16 @@ class TestNestedFilters:
 
         queryset.select_related.assert_called_once_with('foo')
 
-    def test_filter(self, queryset_factory):
+    @pytest.mark.parametrize('filter_object, filter_kwargs', (
+            ('{id: 1}', {'id': 1}),
+            ('{foo: {id: 1}}', {'foo__id': 1}),
+    ))
+    def test_filter(self, filter_object, filter_kwargs, queryset_factory):
         queryset = queryset_factory(model=self.BarModel)
         with mock.patch.object(self.BarModel._default_manager, 'get_queryset', return_value=queryset):
-            slothql.gql(self.schema, 'query { bars(filter: {id: 1}) { foo { id } } }')
+            slothql.gql(self.schema, f'query {{ bars(filter: {filter_object}) {{ foo {{ id }} }} }}')
 
-        queryset.filter.assert_called_once_with(id=1)
+        queryset.filter.assert_called_once_with(**filter_kwargs)
 
     def test_prefetch_related(self, queryset_factory):
         queryset = queryset_factory(model=self.FooModel)
@@ -74,13 +78,17 @@ class TestNestedFilters:
             slothql.gql(self.schema, 'query { foos { bars { id } } }')
 
         queryset.prefetch_related.assert_called_once_with(
-            models.Prefetch('bars', queryset=self.FooModel._default_manager.get_queryset()),
+            models.Prefetch('bars', queryset=self.BarModel._default_manager.get_queryset()),
         )
 
-    @pytest.mark.xfail
     def test_prefetch_related_with_filter(self, queryset_factory):
-        queryset = queryset_factory(model=self.FooModel)
-        with mock.patch.object(self.FooModel._default_manager, 'get_queryset', return_value=queryset):
-            slothql.gql(self.schema, 'query { foos { bars(filter: {id: 1}) { id } } }')
+        foo_queryset = queryset_factory(model=self.FooModel)
+        bar_queryset = queryset_factory(model=self.BarModel)
+        with mock.patch.object(self.FooModel._default_manager, 'get_queryset', return_value=foo_queryset):
+            with mock.patch.object(self.BarModel._default_manager, 'get_queryset', return_value=bar_queryset):
+                slothql.gql(self.schema, 'query { foos { bars(filter: {id: 1}) { id } } }')
 
-        queryset.prefetch_related.assert_called_once_with()
+        foo_queryset.prefetch_related.assert_called_once_with(
+            models.Prefetch('bars', queryset=bar_queryset),
+        )
+        bar_queryset.filter.assert_called_once_with(id=1)

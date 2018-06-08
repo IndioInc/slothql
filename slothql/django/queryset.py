@@ -1,55 +1,34 @@
-import typing as t
-
 from django.db import models
 
-from slothql.selections import Selections, Selection
+from slothql.selections import Selection
 
-from .utils.model import get_selectable_relations, get_relations, Relation
-
-
-def get_selects(model: t.Type[models.Model], root_selections: Selections) -> t.Iterable[str]:
-    forward_relations = get_selectable_relations(model)
-    for name, selections in root_selections.items():
-        if selections and name in forward_relations:
-            yield from ([f'{name}__{s}' for s in get_selects(forward_relations[name], selections)] or (name,))
+from .utils.model import Relation
 
 
-def get_prefetches(model: t.Type[models.Model], root_selections: Selections) -> t.Iterable[str]:
-    relations = get_relations(model)
-    for name, selections in root_selections.items():
-        if selections and name in relations:
-            yield from ([f'{name}__{s}' for s in get_prefetches(relations[name], selections)] or (name,))
-
-
-def remove_selections(selections: Selections, selects: tuple):
-    return selections
-
-
-def get_optimized_queryset(manager: models.Manager, selections: Selections):
-    queryset: models.QuerySet = manager.get_queryset()
-    # selects = tuple(get_selects(manager.model, selections))
-    # if selects:
-    #     queryset = queryset.select_related(*selects)
-    #     selections = remove_selections(selections, selects)
-    prefetches = tuple(get_prefetches(manager.model, selections))
-    if prefetches:
-        queryset = queryset.prefetch_related(*prefetches)
-    return queryset
-
-
-def apply_selections(queryset: models.QuerySet, selections: t.Iterable[Selection]) -> models.QuerySet:
-    return select_related(queryset, selections)
-
-
-def select_related(queryset: models.QuerySet, selections: t.Iterable[Selection]) -> models.QuerySet:
-    fields = [s.field_name for s in selections]
+def select_related(queryset: models.QuerySet, selection: Selection) -> models.QuerySet:
+    fields = [s.field_name for s in selection.selections]
     return queryset.select_related(*(
         relation.name for relation in Relation.get_selectable(model=queryset.model) if relation.name in fields
     ))
 
 
-def prefetch_related(queryset: models.QuerySet, selections: t.Iterable[Selection]) -> models.QuerySet:
-    fields = [s.field_name for s in selections]
+def prefetch_related(queryset: models.QuerySet, selection: Selection) -> models.QuerySet:
+    fields = [s.field_name for s in selection.selections]
     return queryset.prefetch_related(*(
-        relation.name for relation in Relation.get_prefetchable(model=queryset.model) if relation.name in fields
+        models.Prefetch(
+            lookup=relation.name,
+            queryset=filter_queryset(relation.model._default_manager.get_queryset(),
+                                     next(s for s in selection.selections if s.field_name == relation.name)),
+        )
+        for relation in Relation.get_prefetchable(model=queryset.model) if relation.name in fields
     ))
+
+
+def filter_queryset(queryset: models.QuerySet, selection: Selection):
+    if not selection.filters:
+        return queryset
+    kwargs = {
+        expression.path.replace('.', '__'): expression.value
+        for expression in selection.filters
+    }
+    return queryset.filter(**kwargs)

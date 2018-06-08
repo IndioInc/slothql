@@ -1,7 +1,5 @@
 from typing import Type, Tuple
 
-import slothql
-
 from .base import BaseType, BaseOptions, BaseMeta
 from .object import Object
 
@@ -44,7 +42,7 @@ class Union(BaseType, metaclass=UnionMeta):
         abstract = True
 
     @classmethod
-    def resolve_type(cls, obj, info: slothql.ResolveInfo):
+    def resolve_type(cls, obj, info):
         """
         This acts only as a template.
         It will be overwritten to None by the metaclass, if not implemented

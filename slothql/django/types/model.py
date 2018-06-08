@@ -4,8 +4,9 @@ import typing as t
 from django.db import models
 
 import slothql
-from slothql.django.queryset import select_related, prefetch_related
-from slothql.selections import get_selections
+from slothql import BaseType
+from slothql.django.queryset import select_related, prefetch_related, filter_queryset
+from slothql.django.utils import Relation
 from slothql.types.fields.resolver import ResolveArgs
 from slothql.types.object import Object, ObjectMeta, ObjectOptions
 from slothql.django import utils
@@ -30,7 +31,7 @@ class ModelMeta(ObjectMeta):
         assert 'Meta' in attrs, f'class {name} is missing "Meta" class'
         return super().__new__(mcs, name, bases, attrs, options_class, **kwargs)
 
-    def get_option_attrs(cls, class_name: str, base_attrs: dict, attrs: dict, meta_attrs: dict):
+    def get_option_attrs(cls, class_name: str, base_attrs: dict, attrs: dict, meta_attrs: dict) -> dict:
         fields = meta_attrs.pop('fields', None)
         if fields:
             model = base_attrs.get('model') or meta_attrs.get('model')
@@ -83,6 +84,16 @@ class ModelMeta(ObjectMeta):
             for name, field in cls._meta.fields.items() if field.filterable
         }, model=cls._meta.model)
 
+    @classmethod
+    def validate_field(mcs, field: slothql.Field, of_type: t.Type[BaseType]):
+        if issubclass(of_type, Model) and issubclass(field.parent, Model):
+            related_fields = {r.name: r.model for r in Relation.get_prefetchable(field.parent._meta.model)}
+            assert field.name in related_fields, f'Related field `{field.name}` does not match any model relation'
+            assert of_type._meta.model is related_fields[field.name], (
+                f'Related field `{field.name}` type does not match model relation.'
+                f' {of_type._meta.model} is not {related_fields[field.name]}'
+            )
+
 
 class Model(Object, metaclass=ModelMeta):
     _meta: ModelOptions
@@ -94,9 +105,9 @@ class Model(Object, metaclass=ModelMeta):
     def resolve(cls, resolved: t.Iterable, info: slothql.ResolveInfo, args: ResolveArgs, many: bool) -> t.Iterable:
         if resolved is None:
             queryset: models.QuerySet = cls._meta.model._default_manager.get_queryset()
-            selections = get_selections(info)
-            queryset = select_related(queryset, selections)
-            queryset = prefetch_related(queryset, selections)
+            queryset = select_related(queryset, info.selection)
+            queryset = prefetch_related(queryset, info.selection)
+            queryset = filter_queryset(queryset, info.selection)
         else:
             queryset = resolved.get_queryset() if isinstance(resolved, models.Manager) else resolved
         queryset = super().resolve(queryset, info, args, many)

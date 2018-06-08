@@ -13,6 +13,7 @@ def queryset(**kwargs):
         prefetch_related=mock.Mock(side_effect=lambda *_: queryset_instance),
         filter=mock.Mock(side_effect=lambda **_: queryset_instance),
         __iter__=lambda self: iter(()),
+        _iterable_class=models.query.ModelIterable,
         **kwargs,
     )
     return queryset_instance

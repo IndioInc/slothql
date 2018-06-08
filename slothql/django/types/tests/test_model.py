@@ -19,10 +19,10 @@ def test_model__missing_meta():
 def test_relation_field_validation():
     class FooModel(models.Model):
         class Meta:
-            app_label = 'slothql'
+            app_label = 'slothql.django.model'
 
     class Foo(slothql.django.Model):
-        foo = models.Field(lambda: Foo)
+        foo = slothql.Field(lambda: Foo)
 
         class Meta:
             model = FooModel
@@ -33,4 +33,4 @@ def test_relation_field_validation():
 
     with pytest.raises(AssertionError) as exc_info:
         slothql.Schema(query=Query)
-    assert '' == str(exc_info.value)
+    assert 'Related field `foo` does not match any model relation' == str(exc_info.value)

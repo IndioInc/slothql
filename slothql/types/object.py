@@ -1,7 +1,5 @@
 import typing as t
 
-import slothql
-
 from .base import BaseType, BaseMeta, BaseOptions
 from .mixins import FieldMetaMixin, Resolvable
 from .fields import Field
@@ -49,6 +47,10 @@ class ObjectMeta(FieldMetaMixin, BaseMeta):
             for name, field in cls._meta.fields.items() if field.filterable
         })
 
+    @classmethod
+    def validate_field(mcs, field: Field, of_type: t.Type[BaseType]):
+        pass
+
 
 class Object(Resolvable, BaseType, metaclass=ObjectMeta):
     _meta: ObjectOptions
@@ -57,13 +59,13 @@ class Object(Resolvable, BaseType, metaclass=ObjectMeta):
         abstract = True
 
     @classmethod
-    def resolve(cls, resolved: t.Iterable, info: slothql.ResolveInfo, args: dict, many: bool) -> t.Iterable:
+    def resolve(cls, resolved: t.Iterable, info, args: dict, many: bool) -> t.Iterable:
         if cls._meta.filter_class:
             return cls._meta.filter_class(**args.get('filter', {})).apply(resolved)
         return resolved
 
     @classmethod
-    def is_type_of(cls, obj, info: slothql.ResolveInfo) -> bool:
+    def is_type_of(cls, obj, info) -> bool:
         """
         This acts only as a template.
         It will be overwritten to None by the metaclass, if not implemented
