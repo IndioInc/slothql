@@ -1,4 +1,12 @@
-from .selections import Selection, ResolveInfo
+from .resolution import (
+    Resolver,
+    ResolveArgs,
+    PartialResolver,
+    Selection,
+    ResolveInfo,
+    FilterExpression,
+    FilterOperator,
+)
 from .types.fields import (
     Field,
     Integer,
@@ -17,9 +25,14 @@ from .operation import Operation, InvalidOperation
 from .query import gql, ExecutionResult
 
 __all__ = (
-    # graphql
+    # resolution
+    "Resolver",
+    "PartialResolver",
+    "ResolveArgs",
     "Selection",
     "ResolveInfo",
+    "FilterExpression",
+    "FilterOperator",
     # fields
     "Field",
     "Integer",

@@ -28,5 +28,4 @@ class DjangoFilter(Filter, metaclass=DjangoFilterMeta):
     _meta: DjangoFilterOptions
 
     def apply(self, queryset: models.QuerySet) -> models.QuerySet:
-        # assert isinstance(queryset, models.QuerySet), f'Expected QuerySet, but received {queryset}'
         return queryset

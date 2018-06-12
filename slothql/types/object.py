@@ -1,7 +1,8 @@
 import typing as t
 
+from slothql import resolution
 from .base import BaseType, BaseMeta, BaseOptions
-from .mixins import FieldMetaMixin, Resolvable
+from .mixins import FieldMetaMixin
 from .fields import Field
 from .fields.filter import Filter
 
@@ -72,14 +73,17 @@ class ObjectMeta(FieldMetaMixin, BaseMeta):
         pass
 
 
-class Object(Resolvable, BaseType, metaclass=ObjectMeta):
+class Object(resolution.Resolvable, BaseType, metaclass=ObjectMeta):
     _meta: ObjectOptions
 
     class Meta:
         abstract = True
 
     @classmethod
-    def resolve(cls, resolved: t.Iterable, info, args: dict, many: bool) -> t.Iterable:
+    def resolve(
+        cls, resolver: resolution.Resolver, obj, info, args: dict, field
+    ) -> t.Iterable:
+        resolved = resolver(obj, info, args)
         if cls._meta.filter_class:
             return cls._meta.filter_class(**args.get("filter", {})).apply(resolved)
         return resolved

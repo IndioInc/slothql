@@ -1,11 +1,23 @@
 from django.db import models
 
-from slothql.selections import Selection
+import slothql
 
 from .utils.model import Relation
 
 
-def select_related(queryset: models.QuerySet, selection: Selection) -> models.QuerySet:
+def optimize_queryset(
+    queryset: models.QuerySet, selection: slothql.Selection
+) -> models.QuerySet:
+    # if queryset._result_cache:
+    #     return queryset
+    return filter_queryset(
+        prefetch_related(select_related(queryset, selection), selection), selection
+    )
+
+
+def select_related(
+    queryset: models.QuerySet, selection: slothql.Selection
+) -> models.QuerySet:
     fields = [s.field_name for s in selection.selections]
     return queryset.select_related(
         *(
@@ -17,7 +29,7 @@ def select_related(queryset: models.QuerySet, selection: Selection) -> models.Qu
 
 
 def prefetch_related(
-    queryset: models.QuerySet, selection: Selection
+    queryset: models.QuerySet, selection: slothql.Selection
 ) -> models.QuerySet:
     fields = [s.field_name for s in selection.selections]
     return queryset.prefetch_related(
@@ -37,7 +49,7 @@ def prefetch_related(
     )
 
 
-def filter_queryset(queryset: models.QuerySet, selection: Selection):
+def filter_queryset(queryset: models.QuerySet, selection: slothql.Selection):
     if not selection.filters:
         return queryset
     kwargs = {

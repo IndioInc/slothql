@@ -1,19 +1,8 @@
 import functools
 import typing as t
 
-import graphql
-
-from slothql import types
+from slothql import resolution, types
 from slothql.types.base import LazyType, resolve_lazy_type, BaseType
-
-from .. import mixins
-from .resolver import (
-    get_resolver,
-    Resolver,
-    PartialResolver,
-    ResolveArgs,
-    is_valid_resolver,
-)
 
 
 class Field:
@@ -33,7 +22,7 @@ class Field:
         self,
         of_type: t.Union[LazyType, str],
         *,
-        resolver: PartialResolver = None,
+        resolver: resolution.PartialResolver = None,
         description: str = None,
         source: str = None,
         many: bool = False,
@@ -44,7 +33,7 @@ class Field:
     ):
         self._type = of_type
 
-        assert resolver is None or is_valid_resolver(
+        assert resolver is None or resolution.is_valid_partial_resolver(
             resolver
         ), f"Resolver has to be callable, but got {resolver}"
         self._resolver = resolver
@@ -104,9 +93,9 @@ class Field:
         return resolved_type
 
     @property
-    def resolver(self) -> Resolver:
-        resolver = get_resolver(self, self._resolver)
-        assert resolver is None or callable(
+    def resolver(self) -> resolution.Resolver:
+        resolver = resolution.get_resolver(self, self._resolver) or self.resolve_field
+        assert resolution.is_valid_resolver(
             resolver
         ), f"resolver needs to be callable, not {resolver}"
         return functools.partial(self.resolve, resolver)
@@ -122,17 +111,19 @@ class Field:
         return {}
 
     def resolve(
-        self, resolver: t.Optional[Resolver], obj, info: graphql.ResolveInfo, **kwargs
+        self, resolver: resolution.Resolver, obj, info: resolution.ResolveInfo, **kwargs
     ):
-        resolved = (resolver or self.resolve_field)(obj, info, kwargs)
-        if issubclass(self.of_type, mixins.Resolvable):
-            return self.of_type.resolve(resolved, info, kwargs, self.many)
-        return resolved
+        field_type = self.of_type
+        if issubclass(field_type, resolution.Resolvable):
+            return field_type.resolve(resolver, obj, info, kwargs, self)
+        return resolver(obj, info, kwargs)
 
     def get_internal_name(self, name: str) -> str:
         return self.source or name
 
-    def resolve_field(self, obj, info: graphql.ResolveInfo, args: ResolveArgs):
+    def resolve_field(
+        self, obj, info: resolution.ResolveInfo, args: resolution.ResolveArgs
+    ):
         if obj is None:
             return None
         name = self.get_internal_name(info.field_name)

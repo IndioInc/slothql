@@ -103,9 +103,29 @@ class TestNestedFilters:
                 "get_queryset",
                 return_value=bar_queryset,
             ):
-                slothql.gql(
-                    self.schema, "query { foos { bars(filter: {id: 1}) { id } } }"
+                query = "query { foos { bars(filter: {id: 1}) { id } } }"
+                assert not slothql.gql(self.schema, query).errors
+
+        foo_queryset.prefetch_related.assert_called_once_with(
+            models.Prefetch("bars", queryset=bar_queryset)
+        )
+        bar_queryset.filter.assert_called_once_with(id=1)
+
+    def test_prefetch_not_overwritten(self, queryset_factory):
+        foo_queryset = queryset_factory(model=self.FooModel)
+        bar_queryset = queryset_factory(model=self.BarModel)
+        with mock.patch.object(
+            self.FooModel._default_manager, "get_queryset", return_value=foo_queryset
+        ):
+            with mock.patch.object(
+                self.BarModel._default_manager,
+                "get_queryset",
+                return_value=bar_queryset,
+            ):
+                query = (
+                    "query { foos { bars(filter: {id: 1}) { foo { bars { id } } } } }"
                 )
+                assert not slothql.gql(self.schema, query).errors
 
         foo_queryset.prefetch_related.assert_called_once_with(
             models.Prefetch("bars", queryset=bar_queryset)

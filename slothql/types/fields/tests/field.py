@@ -21,7 +21,7 @@ class TestField:
     def test_default_resolver(self, type_mock, info_mock):
         of_type = type_mock()
         field = slothql.Field(of_type=of_type)
-        assert 1 == field.resolve(None, {"a": 1}, info_mock(field_name="a"))
+        assert 1 == field.resolver({"a": 1}, info_mock(field_name="a"))
 
 
 @pytest.mark.parametrize(

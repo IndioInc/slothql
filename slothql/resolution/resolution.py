@@ -5,6 +5,23 @@ import typing as t
 import graphql
 from graphql.language import ast
 
+ResolveArgs = t.Dict[str, ast.Value]
+PartialResolver = t.Union[
+    t.Callable[[t.Any, graphql.ResolveInfo, ResolveArgs], t.Any],
+    t.Callable[[t.Any, graphql.ResolveInfo], t.Any],
+    t.Callable[[t.Any], t.Any],
+    t.Callable[[], t.Any],
+]
+Resolver = t.Callable[[t.Any, graphql.ResolveInfo, ResolveArgs], t.Any]
+
+
+class Resolvable:
+    @classmethod
+    def resolve(
+        cls, resolver: Resolver, obj, info: "ResolveInfo", args: ResolveArgs, field
+    ) -> t.Iterable:
+        raise NotImplementedError
+
 
 @enum.unique
 class FilterOperator(enum.Enum):

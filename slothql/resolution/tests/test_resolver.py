@@ -1,6 +1,6 @@
 import pytest
 
-from ..resolver import PartialResolver, get_resolver
+from slothql.resolution.resolver import PartialResolver, get_resolver
 
 
 class A:

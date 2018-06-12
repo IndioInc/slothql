@@ -5,9 +5,8 @@ from django.db import models
 
 import slothql
 from slothql import BaseType
-from slothql.django.queryset import select_related, prefetch_related, filter_queryset
+from slothql.django.queryset import optimize_queryset
 from slothql.django.utils import Relation
-from slothql.types.fields.resolver import ResolveArgs
 from slothql.types.object import Object, ObjectMeta, ObjectOptions
 from slothql.django import utils
 
@@ -145,23 +144,22 @@ class Model(Object, metaclass=ModelMeta):
     @classmethod
     def resolve(
         cls,
-        resolved: t.Iterable,
+        resolver: slothql.Resolver,
+        obj,
         info: slothql.ResolveInfo,
-        args: ResolveArgs,
-        many: bool,
+        args: slothql.ResolveArgs,
+        field: slothql.Field,
     ) -> t.Iterable:
+        resolved = resolver(obj, info, args)
         if resolved is None:
             queryset: models.QuerySet = cls._meta.model._default_manager.get_queryset()
-            queryset = select_related(queryset, info.selection)
-            queryset = prefetch_related(queryset, info.selection)
-            queryset = filter_queryset(queryset, info.selection)
+            queryset = optimize_queryset(queryset, info.selection)
         else:
             queryset = (
                 resolved.get_queryset()
                 if isinstance(resolved, models.Manager)
                 else resolved
             )
-        queryset = super().resolve(queryset, info, args, many)
-        if not many and isinstance(queryset, models.QuerySet):
+        if not field.many and isinstance(queryset, models.QuerySet):
             return queryset.get()
         return queryset

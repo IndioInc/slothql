@@ -1,13 +1,13 @@
-import inspect
 import functools
+import inspect
 import typing as t
 
 import graphql
-from graphql.language.ast import Value
+from graphql.language import ast
 
-from slothql.utils.functional import is_method, get_function_signature
+from slothql.utils.functional import get_function_signature, is_method
 
-ResolveArgs = t.Dict[str, Value]
+ResolveArgs = t.Dict[str, ast.Value]
 PartialResolver = t.Union[
     t.Callable[[t.Any, graphql.ResolveInfo, ResolveArgs], t.Any],
     t.Callable[[t.Any, graphql.ResolveInfo], t.Any],
@@ -55,7 +55,11 @@ def get_resolver(field, resolver: PartialResolver) -> t.Optional[Resolver]:
     return func and _inject_missing_args(func)
 
 
-def is_valid_resolver(resolver: PartialResolver) -> bool:
+def is_valid_partial_resolver(resolver: PartialResolver) -> bool:
     return inspect.isfunction(resolver) or isinstance(
         resolver, (classmethod, staticmethod)
     )
+
+
+def is_valid_resolver(resolver: Resolver) -> bool:
+    return callable(resolver)

@@ -1,7 +1,6 @@
 from graphql.language import ast
 
-from slothql.selections import FilterExpression
-from ..selections import Selection
+import slothql
 
 
 def test_selections_from_ast():
@@ -26,17 +25,18 @@ def test_selections_from_ast():
     ]
 
     assert [
-        Selection(field_name="foo"),
-        Selection(
+        slothql.Selection(field_name="foo"),
+        slothql.Selection(
             field_name="nested",
             selections=[
-                Selection(field_name="bar"),
-                Selection(
-                    field_name="more_nested", selections=[Selection(field_name="baz")]
+                slothql.Selection(field_name="bar"),
+                slothql.Selection(
+                    field_name="more_nested",
+                    selections=[slothql.Selection(field_name="baz")],
                 ),
             ],
         ),
-    ] == list(Selection.from_ast_fields(selections))
+    ] == list(slothql.Selection.from_ast_fields(selections))
 
 
 def test_selection_arguments():
@@ -66,12 +66,12 @@ def test_selection_arguments():
         )
     ]
     assert [
-        Selection(
+        slothql.Selection(
             field_name="field",
             selections=None,
             filters=[
-                FilterExpression(path="foo.bar", value=1),
-                FilterExpression(path="baz", value="baz"),
+                slothql.FilterExpression(path="foo.bar", value=1),
+                slothql.FilterExpression(path="baz", value="baz"),
             ],
         )
-    ] == list(Selection.from_ast_fields(selections))
+    ] == list(slothql.Selection.from_ast_fields(selections))
