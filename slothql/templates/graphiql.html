@@ -108,7 +108,7 @@
             headers: {
                 'Accept': 'application/json',
                 'Content-Type': 'application/json',
-                'X-CSRFToken': csrf_token || '{{ csrf_token }}',
+                'X-CSRFToken': csrf_token || '{% csrf_token %}',
             },
             body: JSON.stringify(graphQLParams),
             credentials: 'include',

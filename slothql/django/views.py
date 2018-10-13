@@ -1,8 +1,9 @@
 import json
 from collections import OrderedDict
-from typing import Tuple, Optional, Union, Callable
+import typing as t
 
 from cached_property import cached_property
+
 from django import template
 from django.core.handlers.wsgi import WSGIRequest
 from django.views import View
@@ -23,7 +24,7 @@ class GraphQLView(View):
     graphiql_version: str = "0.11.10"
     graphiql_template: str = "graphiql.html"
 
-    schema: Union[GraphQLSchema, Callable] = None
+    schema: t.Union[GraphQLSchema, t.Callable] = None
 
     @classmethod
     def as_view(cls, **initkwargs):
@@ -60,7 +61,7 @@ class GraphQLView(View):
     def template(self) -> template.Template:
         return template.Template(get_template_string(self.graphiql_template))
 
-    def get_operation(self) -> Tuple[Optional[slothql.Operation], Optional[str]]:
+    def get_operation(self) -> t.Tuple[t.Optional[slothql.Operation], t.Optional[str]]:
         try:
             return get_operation_from_request(self.request), None
         except slothql.InvalidOperation as e:
@@ -73,7 +74,7 @@ class GraphQLView(View):
 
     def get_query_result(
         self, operation: slothql.Operation = None
-    ) -> Tuple[Optional[str], int]:
+    ) -> t.Tuple[t.Optional[str], int]:
         if operation:
             result = self.execute_operation(operation)
             return self.jsonify(result), 200 if result.valid else 400
@@ -100,6 +101,7 @@ class GraphQLView(View):
         )
 
     def get_context_data(self) -> OrderedDict:
+
         return OrderedDict(
             {"title": "GraphiQL", "graphiql_version": self.graphiql_version}
         )

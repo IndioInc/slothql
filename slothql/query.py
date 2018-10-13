@@ -1,15 +1,16 @@
-from typing import List, Tuple, Any, Optional
+import typing as t
 
 from graphql import Source, parse, validate, GraphQLSchema
 from graphql.error import format_error, GraphQLSyntaxError
-from graphql import execute
+
+from .executor import execute
 
 import slothql
 
 
 class ExecutionResult(dict):
     @property
-    def errors(self) -> Optional[list]:
+    def errors(self) -> t.Optional[list]:
         return self.get("errors", [])
 
     @property
@@ -19,13 +20,6 @@ class ExecutionResult(dict):
     @property
     def valid(self) -> bool:
         return "errors" not in self
-
-
-def middleware(resolver, obj, info, **kwargs):
-    """
-    example middleware
-    """
-    return resolver(obj, info, **kwargs)
 
 
 class Query:
@@ -43,7 +37,7 @@ class Query:
         self.ast, self.errors = self.get_ast(self.operation.query, self.schema)
 
     @classmethod
-    def get_ast(cls, query, schema) -> Tuple[Any, List[GraphQLSyntaxError]]:
+    def get_ast(cls, query, schema) -> t.Tuple[t.Any, t.List[GraphQLSyntaxError]]:
         try:
             ast = parse(Source(query))
         except GraphQLSyntaxError as e:
@@ -53,13 +47,14 @@ class Query:
     def execute(self) -> ExecutionResult:
         if self.errors:
             return ExecutionResult(errors=[self.format_error(e) for e in self.errors])
+
         result = execute(
             schema=self.schema,
             document_ast=self.ast,
-            variable_values=self.operation.variables,
+            variables=self.operation.variables,
             operation_name=self.operation.operation_name,
-            middleware=[middleware],
         )
+
         return ExecutionResult(data=result.data)
 
     @classmethod

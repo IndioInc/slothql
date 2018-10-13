@@ -1,21 +1,21 @@
 graphql-core>=2<3
-cached-property==1.4
+cached-property==1.5.1
 
 # optional
-django==2.0
+django>=2.0
 psycopg2-binary>=2.7<3
 
 # testing
-pytest
-pytest-cov
-pytest-django
+pytest==3.8.2
+pytest-cov==2.6.0
+pytest-django==3.4.3
 
 # QA
-flake8
-flake8-comprehensions
-black
+flake8==3.5.0
+flake8-comprehensions==1.4.1
+black==18.9b0
 
 # documentation
-sphinx
-recommonmark  # markdown support
-sphinx-rtd-theme
+sphinx==1.8.1
+recommonmark==0.4.0  # markdown support
+sphinx-rtd-theme==0.4.2

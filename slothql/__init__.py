@@ -56,11 +56,3 @@ __all__ = (
     "gql",
     "ExecutionResult",
 )
-
-try:
-    from slothql import django
-
-    __all__ += ("django",)
-except ImportError as e:
-    if str(e) != "No module named 'django'":
-        raise

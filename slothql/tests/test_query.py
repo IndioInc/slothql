@@ -43,7 +43,6 @@ def test_gql__syntax_error(query):
     assert result.get("errors")
 
 
-@pytest.mark.xfail
 def test_gql__exception_not_handled():
     def resolver(*_):
         raise RuntimeError

@@ -1,15 +1,14 @@
 import json
+import typing as t
 
-from typing import NamedTuple
-
-from slothql.utils.case import camelcase_to_snake
+from .utils.case import camelcase_to_snake
 
 
 class InvalidOperation(RuntimeError):
     pass
 
 
-class Operation(NamedTuple):
+class Operation(t.NamedTuple):
     query: str
     variables: dict
     operation_name: str
