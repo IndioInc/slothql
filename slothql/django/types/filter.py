@@ -8,7 +8,7 @@ from slothql.types.fields.filter import Filter, FilterMeta, FilterOptions
 
 @dataclasses.dataclass()
 class DjangoFilterOptions(FilterOptions):
-    model: t.Type[models.Model] = None
+    model: t.Optional[t.Type[models.Model]] = None
 
 
 class DjangoFilterMeta(FilterMeta):

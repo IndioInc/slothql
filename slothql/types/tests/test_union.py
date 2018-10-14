@@ -8,9 +8,9 @@ def test_union_type__empty_types():
 
         class Foo(slothql.Union):
             class Meta:
-                union_types = ()
+                union_types = set()
 
-    assert "`Foo`.`union_types` has to be an iterable of Object, not ()" == str(
+    assert "`Foo`.`union_types` has to be an iterable of Object, not set()" == str(
         exc_info.value
     )
 
@@ -26,7 +26,7 @@ def test_union_type__missing_type_resolvers():
 
         class Foo(slothql.Union):
             class Meta:
-                union_types = (A, B)
+                union_types = {A, B}
 
     assert (
         "`Foo` has to provide a `resolve_type` method or each subtype has to provide a `is_type_of` method"
@@ -44,7 +44,7 @@ def test_union_type__abstract():
     class Foo(slothql.Union):
         class Meta:
             abstract = True
-            union_types = ()
+            union_types = set()
 
 
 def test_union_type__is_type_of():
@@ -64,7 +64,7 @@ def test_union_type__is_type_of():
 
     class Foo(slothql.Union):
         class Meta:
-            union_types = (A, B)
+            union_types = {A, B}
 
     class Query(slothql.Object):
         foo = slothql.Field(Foo, many=True, resolver=lambda: [{"a": 1}, {"b": "2"}])
@@ -83,7 +83,7 @@ def test_union_type_missing_resolve_type():
 
     class Foo(slothql.Union):
         class Meta:
-            union_types = (A, B)
+            union_types = {A, B}
 
         @classmethod
         def resolve_type(cls, obj, info):

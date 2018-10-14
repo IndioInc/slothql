@@ -7,9 +7,10 @@ from .object import Object
 
 @dataclasses.dataclass()
 class UnionOptions(BaseOptions):
-    union_types: t.Tuple[Object] = dataclasses.field(default_factory=tuple)
+    union_types: t.Set[t.Type[Object]] = dataclasses.field(default_factory=set)
 
     def __post_init__(self):
+        super().__post_init__()
         assert (
             self.abstract or self.union_types
         ), f"`{self.name}`.`union_types` has to be an iterable of Object, not {repr(self.union_types)}"
@@ -32,7 +33,7 @@ class UnionMeta(BaseMeta):
         assert (
             cls._meta.abstract
             or cls.resolve_type
-            or all(t.is_type_of for t in cls._meta.union_types)
+            or all(i.is_type_of for i in cls._meta.union_types)
         ), (
             f"`{cls.__name__}` has to provide a `resolve_type` method"
             f" or each subtype has to provide a `is_type_of` method"
@@ -44,11 +45,11 @@ class UnionMeta(BaseMeta):
     ):
         union_types = meta_attrs.get("union_types")
         assert union_types is None or all(
-            issubclass(t, Object) for t in union_types
+            issubclass(i, Object) for i in union_types
         ), f"`union_types` have to be an iterable of Object, not {union_types}"
         return {
             **super().get_option_attrs(name, base_attrs, attrs, meta_attrs),
-            **{"union_types": union_types or ()},
+            **{"union_types": union_types or set()},
         }
 
 

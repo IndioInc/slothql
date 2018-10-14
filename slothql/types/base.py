@@ -2,15 +2,22 @@ import dataclasses
 import inspect
 import typing as t
 
-from slothql.utils import get_attr_fields
+from slothql.utils import get_attr_fields, annotations
 
 
 @dataclasses.dataclass()
 class BaseOptions:
     parent: t.Any
+    name: str
     abstract: bool = False
-    name: t.Optional[str] = None
     description: t.Optional[str] = None
+
+    def __post_init__(self):
+        for field in dataclasses.fields(self):  # type: dataclasses.Field
+            assert annotations.validate(getattr(self, field.name), field.type), (
+                f"`{field.name} = {getattr(self, field.name)}`"
+                f" does not match type annotation `{field.type.__name__}`"
+            )
 
 
 class BaseMeta(type):

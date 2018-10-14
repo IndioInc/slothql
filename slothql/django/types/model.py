@@ -17,10 +17,10 @@ from .filter import DjangoFilter
 
 @dataclasses.dataclass()
 class ModelOptions(ObjectOptions):
-    model: t.Type[models.Model] = None
+    model: t.Optional[t.Type[models.Model]] = None
 
     def __post_init__(self):
-        # super().__po()
+        super().__post_init__()
         assert (
             self.abstract or self.model
         ), f'"model" is required for object ModelOptions'

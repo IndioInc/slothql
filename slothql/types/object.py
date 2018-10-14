@@ -11,7 +11,7 @@ from .fields.filter import Filter
 @dataclasses.dataclass()
 class ObjectOptions(BaseOptions):
     fields: t.Dict[str, Field] = dataclasses.field(default_factory=dict)
-    filter_class: t.Type[Filter] = None
+    filter_class: t.Optional[t.Type[Filter]] = None
 
 
 class ObjectMeta(FieldMetaMixin, BaseMeta):

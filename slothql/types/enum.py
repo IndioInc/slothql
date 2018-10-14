@@ -4,11 +4,20 @@ import typing as t
 from .base import BaseType, BaseMeta, BaseOptions
 
 
+class EnumValue:
+    __slots__ = "value", "description"
+
+    def __init__(self, value, description: str = None):
+        self.value = value
+        self.description = description
+
+
 @dataclasses.dataclass()
 class EnumOptions(BaseOptions):
-    enum_values: t.Dict[str, "EnumValue"] = dataclasses.field(default_factory=dict)
+    enum_values: t.Dict[str, EnumValue] = dataclasses.field(default_factory=dict)
 
     def __post_init__(self):
+        super().__post_init__()
         assert (
             self.abstract or self.enum_values
         ), f'"{self.name}" is missing valid `Enum` values'
@@ -31,14 +40,6 @@ class EnumMeta(BaseMeta):
                 }
             },
         }
-
-
-class EnumValue:
-    __slots__ = "value", "description"
-
-    def __init__(self, value, description: str = None):
-        self.value = value
-        self.description = description
 
 
 class Enum(BaseType, metaclass=EnumMeta):
