@@ -1,3 +1,4 @@
+import dataclasses
 import typing as t
 
 from django.db import models
@@ -5,9 +6,9 @@ from django.db import models
 from slothql.types.fields.filter import Filter, FilterMeta, FilterOptions
 
 
+@dataclasses.dataclass()
 class DjangoFilterOptions(FilterOptions):
-    __slots__ = ("model",)
-    model: t.Type[models.Model]
+    model: t.Type[models.Model] = None
 
 
 class DjangoFilterMeta(FilterMeta):

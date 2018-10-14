@@ -5,9 +5,9 @@ class FieldMetaMixin(type):
     __slots__ = ()
 
     def __new__(mcs, name: str, bases: tuple, attrs: dict, options_class, **kwargs):
-        assert hasattr(
-            options_class, "fields"
-        ), f"FieldMetaMixin expects `options_class` to have a `fields` attribute"
+        # assert hasattr(
+        #     options_class, "fields"
+        # ), f"FieldMetaMixin expects `options_class` to have a `fields` attribute"
         cls = super().__new__(mcs, name, bases, attrs, options_class, **kwargs)
         for name, field in cls._meta.fields.items():
             setattr(cls, name, field)

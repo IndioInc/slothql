@@ -133,7 +133,7 @@ class Field:
             value = getattr(obj, name, None)
         return value
 
-    def __eq__(self, other: "class"):
+    def __eq__(self, other: "Field"):
         if not isinstance(other, Field):
             raise ValueError(
                 f"slothql.Field can only be compared with other slothql.Field instances, not {other}"

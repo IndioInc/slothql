@@ -1,14 +1,15 @@
-from typing import Type, Tuple
+import dataclasses
+import typing as t
 
 from .base import BaseType, BaseOptions, BaseMeta
 from .object import Object
 
 
+@dataclasses.dataclass()
 class UnionOptions(BaseOptions):
-    __slots__ = ("union_types",)
+    union_types: t.Tuple[Object] = dataclasses.field(default_factory=tuple)
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def __post_init__(self):
         assert (
             self.abstract or self.union_types
         ), f"`{self.name}`.`union_types` has to be an iterable of Object, not {repr(self.union_types)}"
@@ -18,12 +19,12 @@ class UnionMeta(BaseMeta):
     def __new__(
         mcs,
         name: str,
-        bases: Tuple[type],
+        bases: t.Tuple[type],
         attrs: dict,
-        options_class: Type[UnionOptions] = UnionOptions,
+        options_class: t.Type[UnionOptions] = UnionOptions,
         **kwargs,
     ):
-        cls: Type[Union] = super().__new__(
+        cls: t.Type[Union] = super().__new__(
             mcs, name, bases, attrs, options_class, **kwargs
         )
         if cls._meta.name is "Union" and cls._meta.abstract:

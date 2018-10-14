@@ -1,29 +1,16 @@
+import dataclasses
 import inspect
 import typing as t
 
-from slothql.utils import is_magic_name, get_attr_fields
+from slothql.utils import get_attr_fields
 
 
+@dataclasses.dataclass()
 class BaseOptions:
-    __slots__ = "parent", "abstract", "name", "description"
-    abstract: bool
-    name: str
-    description: str
-
-    def set_defaults(self):
-        for name in (n for n in dir(self) if not is_magic_name(n)):
-            if not hasattr(self, name):
-                setattr(self, name, None)
-
-    def __init__(self, **kwargs):
-        self.set_defaults()
-        for name, value in kwargs.items():
-            try:
-                setattr(self, name, value)
-            except AttributeError:
-                raise AttributeError(
-                    f'Meta received an unexpected attribute "{name} = {value}"'
-                )
+    parent: t.Any
+    abstract: bool = False
+    name: t.Optional[str] = None
+    description: t.Optional[str] = None
 
 
 class BaseMeta(type):
@@ -41,6 +28,13 @@ class BaseMeta(type):
         cls: BaseMeta = super().__new__(mcs, name, bases, attrs)
         base_option = cls.merge_options(*mcs.get_options_bases(bases))
         meta_attrs = get_attr_fields(attrs["Meta"]) if "Meta" in attrs else {}
+
+        option_fields = {field.name for field in dataclasses.fields(options_class)}
+        for attr_name, value in meta_attrs.items():
+            if attr_name not in option_fields:
+                raise AttributeError(
+                    f"Meta received an unexpected attribute `{attr_name} = {value}`"
+                )
         cls._meta = options_class(
             **cls.merge_options(
                 base_option, cls.get_option_attrs(name, base_option, attrs, meta_attrs)
@@ -68,9 +62,9 @@ class BaseMeta(type):
     @classmethod
     def get_options_bases(mcs, bases: t.Tuple[type]) -> t.Iterable[dict]:
         yield from (
-            get_attr_fields(base._meta)
+            dataclasses.asdict(base._meta)
             for base in reversed(bases)
-            if hasattr(base, "_meta") and isinstance(base._meta, BaseOptions)
+            if issubclass(base, BaseType)
         )
 
     @classmethod

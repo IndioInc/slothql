@@ -14,7 +14,7 @@ class Operation(t.NamedTuple):
     operation_name: str
 
     @classmethod
-    def from_string(cls, string: str) -> "class":
+    def from_string(cls, string: str) -> "Operation":
         return cls.from_dict(cls.from_raw_json(string))
 
     @classmethod

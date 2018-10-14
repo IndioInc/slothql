@@ -1,3 +1,4 @@
+import dataclasses
 import typing as t
 
 from .. import base
@@ -5,13 +6,9 @@ from ..mixins import FieldMetaMixin
 from .field import Field
 
 
+@dataclasses.dataclass()
 class FilterOptions(base.BaseOptions):
-    __slots__ = ("fields",)
-    fields: t.Dict[str, Field]
-
-    def set_defaults(self):
-        super().set_defaults()
-        self.fields = {}
+    fields: t.Dict[str, Field] = dataclasses.field(default_factory=dict)
 
 
 class FilterMeta(FieldMetaMixin, base.BaseMeta):
@@ -27,7 +24,9 @@ class FilterMeta(FieldMetaMixin, base.BaseMeta):
     ):
         return super().__new__(mcs, name, bases, attrs, options_class, **kwargs)
 
-    def create_class(cls, name: str, fields: t.Dict[str, Field], **kwargs) -> "class":
+    def create_class(
+        cls, name: str, fields: t.Dict[str, Field], **kwargs
+    ) -> "FilterMeta":
         return cls.__class__(name, (cls,), {**fields, "Meta": type("Meta", (), kwargs)})
 
 

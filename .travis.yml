@@ -1,11 +1,14 @@
 language: python
+sudo: required
+dist: xenial
 python:
-  - 3.6
+  - 3.7
 install:
   - pip install -r requirements.txt
 script:
   - pytest --cov
   - flake8 slothql
+#  - mypy .
 after_success:
   - pip install coveralls
   - coveralls

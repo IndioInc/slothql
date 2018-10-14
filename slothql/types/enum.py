@@ -1,13 +1,14 @@
+import dataclasses
 import typing as t
 
 from .base import BaseType, BaseMeta, BaseOptions
 
 
+@dataclasses.dataclass()
 class EnumOptions(BaseOptions):
-    __slots__ = ("enum_values",)
+    enum_values: t.Dict[str, "EnumValue"] = dataclasses.field(default_factory=dict)
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def __post_init__(self):
         assert (
             self.abstract or self.enum_values
         ), f'"{self.name}" is missing valid `Enum` values'

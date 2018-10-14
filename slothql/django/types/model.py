@@ -1,3 +1,4 @@
+import dataclasses
 import inspect
 import typing as t
 
@@ -14,12 +15,12 @@ from .registry import TypeRegistry
 from .filter import DjangoFilter
 
 
+@dataclasses.dataclass()
 class ModelOptions(ObjectOptions):
-    __slots__ = ("model",)
-    model: t.Type[models.Model]
+    model: t.Type[models.Model] = None
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def __post_init__(self):
+        # super().__po()
         assert (
             self.abstract or self.model
         ), f'"model" is required for object ModelOptions'

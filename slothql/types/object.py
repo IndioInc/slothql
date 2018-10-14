@@ -1,3 +1,4 @@
+import dataclasses
 import typing as t
 
 from slothql import resolution
@@ -7,14 +8,10 @@ from .fields import Field
 from .fields.filter import Filter
 
 
+@dataclasses.dataclass()
 class ObjectOptions(BaseOptions):
-    __slots__ = "fields", "filter_class"
-    fields: t.Dict[str, Field]
-    filter_class: t.Type[Filter]
-
-    def set_defaults(self):
-        super().set_defaults()
-        self.fields = {}
+    fields: t.Dict[str, Field] = dataclasses.field(default_factory=dict)
+    filter_class: t.Type[Filter] = None
 
 
 class ObjectMeta(FieldMetaMixin, BaseMeta):
