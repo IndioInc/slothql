@@ -14,7 +14,7 @@ class BaseOptions:
 
     def __post_init__(self):
         for field in dataclasses.fields(self):  # type: dataclasses.Field
-            assert annotations.validate(getattr(self, field.name), field.type), (
+            assert annotations.is_valid_type(getattr(self, field.name), field.type), (
                 f"`{field.name} = {getattr(self, field.name)}`"
                 f" does not match type annotation `{field.type.__name__}`"
             )

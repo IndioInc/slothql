@@ -64,4 +64,9 @@ class Foo:
     ),
 )
 def test_validate(value, annotation, valid: bool):
-    assert valid is annotations.validate(value, annotation)
+    assert valid is annotations.is_valid_type(value, annotation)
+
+
+def test_validate_call__function():
+    def foo(a: int, b: str) -> float:
+        return

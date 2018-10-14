@@ -40,15 +40,15 @@ class GraphQLView(View):
                 ["GET", "POST"], "GraphQL supports only GET and POST requests."
             )
 
-        query, parse_error = self.get_operation()
+        operation, parse_error = self.get_operation()
 
-        result, status_code = self.get_query_result(query)
+        result, status_code = self.get_query_result(operation)
         if self.show_graphiql:
             context = template.Context(
-                {**self.get_context_data(), **{"result": result if query else ""}}
+                {**self.get_context_data(), **{"result": result if operation else ""}}
             )
             return HttpResponse(
-                self.template.render(context), status=status_code if query else 200
+                self.template.render(context), status=status_code if operation else 200
             )
 
         if parse_error:
