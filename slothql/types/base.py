@@ -82,6 +82,8 @@ class BaseMeta(type):
 
 
 class BaseType(metaclass=BaseMeta):
+    _meta: BaseOptions
+
     @staticmethod
     def __new__(cls, *more, **kwargs):
         assert (
@@ -89,7 +91,7 @@ class BaseType(metaclass=BaseMeta):
         ), f"Abstract type {cls.__name__} can not be instantiated"
         return super().__new__(cls)
 
-    def __init__(self):
+    def __init__(self) -> None:
         raise RuntimeError(
             f"`{self.__class__.__name__}` initialization is not supported"
         )

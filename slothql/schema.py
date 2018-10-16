@@ -20,7 +20,7 @@ FieldMap = t.Dict[str, graphql.GraphQLField]
 
 
 class TypeMap(dict):
-    def __init__(self, *types: t.Type[base.BaseType]):
+    def __init__(self, *types: t.Type[base.BaseType]) -> None:
         super().__init__(functools.reduce(self.type_reducer, types, {}))
 
     def type_reducer(self, type_map: dict, of_type: t.Type[base.BaseType]):
@@ -37,10 +37,12 @@ class TypeMap(dict):
 
 
 class ProxyTypeMap(dict):
-    def __init__(self, type_map: TypeMap, auto_camelcase: bool = False):
+    def __init__(self, type_map: TypeMap, auto_camelcase: bool = False) -> None:
         super().__init__()
         self.auto_camelcase = auto_camelcase
-        self.camelcase_type_map = collections.defaultdict(dict)
+        self.camelcase_type_map: t.Dict[
+            str, t.Dict[str], str
+        ] = collections.defaultdict(dict)
         for of_type in type_map.values():
             self.get_graphql_type(of_type)
 
@@ -190,7 +192,7 @@ class Schema(graphql.GraphQLSchema):
         directives=None,
         types=None,
         auto_camelcase: bool = False,
-    ):
+    ) -> None:
         type_map = TypeMap(resolve_lazy_type(query))
         graphql_type_map = ProxyTypeMap(type_map, auto_camelcase=auto_camelcase)
         query = query and graphql_type_map[resolve_lazy_type(query)._meta.name]

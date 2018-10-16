@@ -30,7 +30,7 @@ class Field:
         name: str = None,
         parent=None,
         filterable=True,
-    ):
+    ) -> None:
         self._type = of_type
 
         assert resolver is None or resolution.is_valid_partial_resolver(

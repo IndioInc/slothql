@@ -1,5 +1,8 @@
+import typing as t
+
+
 class Singleton(type):
-    _instances = {}
+    _instances: t.Dict[type, object] = {}
 
     def __call__(cls, *args, **kwargs):
         if cls not in cls._instances:

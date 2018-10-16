@@ -8,7 +8,7 @@ class Executed(Exception):
 
 
 class Class(LazyInitMixin):
-    def __init__(self, a="foo", b="bar"):
+    def __init__(self, a="foo", b="bar") -> None:
         self.a = a
         self.b = b
         raise Executed

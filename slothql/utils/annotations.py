@@ -76,3 +76,12 @@ def validate_call(func: t.Callable) -> t.Callable:
         return func(*args, **kwargs)
 
     return wrapped
+
+
+T = t.TypeVar("T")
+
+
+def get_non_optional(v: t.Optional[T]) -> T:
+    if v is None:
+        raise ValueError("v cannot be None")
+    return v

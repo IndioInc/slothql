@@ -7,7 +7,7 @@ from .base import BaseType, BaseMeta, BaseOptions
 class EnumValue:
     __slots__ = "value", "description"
 
-    def __init__(self, value, description: str = None):
+    def __init__(self, value, description: str = None) -> None:
         self.value = value
         self.description = description
 

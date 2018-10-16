@@ -5,7 +5,7 @@ lazy_proxy_attrs = [
 
 
 class LazyInitProxy:
-    def __init__(self, new, cls, *args, **kwargs):
+    def __init__(self, new, cls, *args, **kwargs) -> None:
         self.__obj = None
         self.__new = new
         self.__cls = cls

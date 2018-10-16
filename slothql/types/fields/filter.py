@@ -24,18 +24,21 @@ class FilterMeta(FieldMetaMixin, base.BaseMeta):
     ):
         return super().__new__(mcs, name, bases, attrs, options_class, **kwargs)
 
-    def create_class(
-        cls, name: str, fields: t.Dict[str, Field], **kwargs
-    ) -> "FilterMeta":
-        return cls.__class__(name, (cls,), {**fields, "Meta": type("Meta", (), kwargs)})
-
 
 class Filter(base.BaseType, metaclass=FilterMeta):
     _meta: FilterOptions
 
     SKIP = object()
 
-    def __init__(self, **kwargs):
+    @classmethod
+    def create_class(
+        cls, name: str, fields: t.Dict[str, Field], **kwargs
+    ) -> t.Type["Filter"]:
+        return type(FilterMeta)(
+            name, (cls,), {**fields, "Meta": type("Meta", (), kwargs)}
+        )
+
+    def __init__(self, **kwargs) -> None:
         for name, value in kwargs.items():
             if name not in self._meta.fields:
                 raise TypeError(

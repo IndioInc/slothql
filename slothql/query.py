@@ -25,7 +25,7 @@ class ExecutionResult(dict):
 class Query:
     __slots__ = "schema", "operation", "ast", "errors"
 
-    def __init__(self, schema: slothql.Schema, operation: slothql.Operation):
+    def __init__(self, schema: slothql.Schema, operation: slothql.Operation) -> None:
         assert isinstance(
             operation.query, str
         ), f"Expected query string, got {operation.query}"

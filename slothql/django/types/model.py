@@ -10,6 +10,7 @@ from slothql.django.queryset import optimize_queryset
 from slothql.django.utils import Relation
 from slothql.types.object import Object, ObjectMeta, ObjectOptions
 from slothql.django import utils
+from slothql.utils import annotations
 
 from .registry import TypeRegistry
 from .filter import DjangoFilter
@@ -150,10 +151,11 @@ class Model(Object, metaclass=ModelMeta):
         info: slothql.ResolveInfo,
         args: slothql.ResolveArgs,
         field: slothql.Field,
-    ) -> t.Iterable:
+    ) -> t.Optional[t.Union[t.Iterable, t.Any]]:
         resolved = resolver(obj, info, args)
         if resolved is None:
-            queryset: models.QuerySet = cls._meta.model._default_manager.get_queryset()
+            model = annotations.get_non_optional(cls._meta.model)
+            queryset: models.QuerySet = model._default_manager.get_queryset()
             queryset = optimize_queryset(queryset, info.selection)
         else:
             queryset = (

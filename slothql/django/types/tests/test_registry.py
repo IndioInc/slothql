@@ -25,13 +25,13 @@ def test_register_field__invalid_django_field(field, type_registry: TypeRegistry
 
 
 def test_clear(type_registry: TypeRegistry):
-    type_registry._type_mapping = {"field": "whatever"}
+    type_registry._type_mapping = {"field": "whatever"}  # type: ignore
     type_registry.clear()
     assert type_registry._type_mapping == {}
 
 
 def test_unregister(type_registry: TypeRegistry):
-    type_registry._type_mapping = {
+    type_registry._type_mapping = {  # type: ignore
         models.CharField: "whatever",
         models.TextField: "wtf",
     }
@@ -45,6 +45,6 @@ def test_get(type_registry: TypeRegistry):
 
 
 def test_get__not_supported(type_registry: TypeRegistry):
-    type_registry._type_mapping = {bool: True, str: "wtf"}
+    type_registry._type_mapping = {bool: True, str: "wtf"}  # type: ignore
     with pytest.raises(NotImplementedError):
         type_registry.get(42)

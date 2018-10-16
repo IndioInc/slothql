@@ -17,7 +17,7 @@ class AstArgument:
 class AstSelection:
     name: str
     arguments: t.Optional[t.List[AstArgument]] = None
-    selections: t.Optional[t.List['AstSelection']] = None
+    selections: t.Optional[t.List["AstSelection"]] = None
 
 
 @dataclasses.dataclass()

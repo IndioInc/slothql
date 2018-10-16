@@ -42,6 +42,7 @@ def get_related_model(descriptor) -> t.Optional[t.Type[models.Model]]:
         return descriptor.field.related_model
     elif isinstance(getattr(descriptor, "related", None), ForeignObjectRel):
         return descriptor.related.related_model
+    return None
 
 
 def field_is_selectable(field: models.Field) -> bool:
