@@ -3,7 +3,6 @@ from __future__ import annotations
 import dataclasses
 import typing as t
 
-
 AstValue = t.Union[str, float, int, bool, None, list, dict]
 
 
@@ -21,5 +20,11 @@ class AstSelection:
 
 
 @dataclasses.dataclass()
-class AstQuery:
+class AstOperation:
     selections: t.List[AstSelection]
+    name: t.Optional[str] = None
+
+
+@dataclasses.dataclass()
+class AstQuery:
+    operations: t.List[AstOperation]

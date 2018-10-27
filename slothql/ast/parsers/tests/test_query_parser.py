@@ -1,66 +1,80 @@
 import pytest
 
 from slothql import ast
+from slothql.utils.test import assert_exception
+
 from .. import query_parser
-
-
-@pytest.mark.parametrize(
-    "query, stripped",
-    (
-        ("\n{\nversion#lol\n}\n", "{version}"),
-        ("\t{\tversion\t}\t", " { version } "),
-        ("# {version}", ""),
-        ("{# {lol}\nversion}", "{version}"),
-    ),
-)
-def test_strip_comments(query: str, stripped: str):
-    assert stripped == query_parser.strip_comments(query)
 
 
 @pytest.mark.parametrize(
     "value, cursor, expected",
     (
-        ("", 0, query_parser.UnexpectedEOF()),
-        ("text", 0, ("text", 4, query_parser.WORD_PATTERN)),
-        ("text", 1, ("ext", 4, query_parser.WORD_PATTERN)),
-        (" \n\t text", 0, ("text", 8, query_parser.WORD_PATTERN)),
-        ("text{abc", 0, ("text", 4, query_parser.WORD_PATTERN)),
-        ("text(abc", 0, ("text", 4, query_parser.WORD_PATTERN)),
-        ("text{abc", 4, ("{", 5, query_parser.BRACKET_PATTERN)),
-        ("text{abc", 5, ("abc", 8, query_parser.WORD_PATTERN)),
+        ("", 0, ("", 0, query_parser.TokenType.EOF)),
+        ("{", 0, ("{", 1, query_parser.TokenType.OPEN_BODY)),
+        ("}", 0, ("}", 1, query_parser.TokenType.CLOSE_BODY)),
+        ("foo", 0, ("foo", 3, query_parser.TokenType.NAME)),
+        ("foo", 1, ("oo", 3, query_parser.TokenType.NAME)),
+        (" \n\t foo", 0, ("foo", 7, query_parser.TokenType.NAME)),
+        ("foo{bar", 0, ("foo", 3, query_parser.TokenType.NAME)),
+        ("foo{bar", 3, ("{", 4, query_parser.TokenType.OPEN_BODY)),
+        ("foo{bar", 4, ("bar", 7, query_parser.TokenType.NAME)),
+        (" \t\nfoo", 0, ("foo", 6, query_parser.TokenType.NAME)),
+        ("#foo{\nbar\n", 0, ("bar", 9, query_parser.TokenType.NAME)),
+        ("#\nfoo\nbar", 0, ("foo", 5, query_parser.TokenType.NAME)),
     ),
 )
 def test_parse_next(value: str, cursor: int, expected):
-    if isinstance(expected, Exception):
-        with pytest.raises(type(expected)) as exc_info:
-            query_parser.parse_next(value, cursor)
-
-        assert isinstance(exc_info.value, type(expected)) and str(expected) == str(
-            exc_info.value
-        )
-    else:
+    with assert_exception(expected if isinstance(expected, Exception) else None):
         assert expected == query_parser.parse_next(value, cursor)
 
 
-@pytest.mark.skip
 @pytest.mark.parametrize(
     "query, expected",
     (
-        ("{version}", ast.AstQuery(selections=[ast.AstSelection(name="version")])),
         (
-            "query {version}",
-            ast.AstQuery(selections=[ast.AstSelection(name="version")]),
+            "{foo}",
+            ast.AstQuery(
+                operations=[ast.AstOperation(selections=[ast.AstSelection(name="foo")])]
+            ),
         ),
         (
-            "query query {version}",
-            ast.AstQuery(selections=[ast.AstSelection(name="version")]),
+            "query {foo}",
+            ast.AstQuery(
+                operations=[ast.AstOperation(selections=[ast.AstSelection(name="foo")])]
+            ),
+        ),
+        (
+            "query foo {bar}",
+            ast.AstQuery(
+                operations=[
+                    ast.AstOperation(
+                        name="foo", selections=[ast.AstSelection(name="bar")]
+                    )
+                ]
+            ),
+        ),
+        (
+            "query q {foo \nsub {bar baz}}",
+            ast.AstQuery(
+                operations=[
+                    ast.AstOperation(
+                        name="q",
+                        selections=[
+                            ast.AstSelection(name="foo"),
+                            ast.AstSelection(
+                                name="sub",
+                                selections=[
+                                    ast.AstSelection(name="bar"),
+                                    ast.AstSelection(name="baz"),
+                                ],
+                            ),
+                        ],
+                    )
+                ]
+            ),
         ),
     ),
 )
 def test_parse_query(query, expected):
-    if isinstance(expected, Exception):
-        with pytest.raises(type(Exception)) as exc_info:
-            query_parser.QueryParser(query).parse()
-        assert expected == exc_info.value
-    else:
+    with assert_exception(expected if isinstance(expected, Exception) else None):
         assert expected == query_parser.QueryParser(query).parse()

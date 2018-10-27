@@ -1,3 +1,3 @@
-from .query import AstQuery, AstSelection, AstArgument, AstValue
+from .query import AstQuery, AstOperation, AstSelection, AstArgument, AstValue
 
-__all__ = ("AstQuery", "AstSelection", "AstArgument", "AstValue")
+__all__ = ("AstQuery", "AstOperation", "AstSelection", "AstArgument", "AstValue")
