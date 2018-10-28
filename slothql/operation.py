@@ -25,7 +25,7 @@ class Operation(t.NamedTuple):
     def serialize(cls, data: dict) -> dict:
         assert isinstance(data, dict), f"Expected data to of instance dict, got {data}"
         data = {camelcase_to_snake(k): v for k, v in data.items()}
-        if not data.get("query"):
+        if "query" not in data:
             raise InvalidOperation('"query" not found in json object')
         if "variables" in data and isinstance(data["variables"], str):
             try:

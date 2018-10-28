@@ -3,13 +3,19 @@ from __future__ import annotations
 import dataclasses
 import typing as t
 
+
+@dataclasses.dataclass()
+class AstVariable:
+    value: str
+
+
 AstValue = t.Union[str, float, int, bool, None, list, dict]
 
 
 @dataclasses.dataclass()
 class AstArgument:
     name: str
-    value: AstValue
+    value: t.Union[AstValue, AstVariable]
 
 
 @dataclasses.dataclass()
