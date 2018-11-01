@@ -1,3 +1,4 @@
+from ast import literal_eval
 import dataclasses
 import itertools
 import re
@@ -7,34 +8,14 @@ from slothql import ast
 
 
 def get_position_from_cursor(value: str, cursor: int) -> t.Tuple[int, int]:
+    assert cursor <= len(
+        value
+    ), f"Cursor out of range, received {cursor} for len(value)={len(value)}"
     line = value[:cursor].count("\n")
-    line_start = 0 if "\n" not in value else value.index("\n", cursor, 0)
-    column = len(value[line_start:cursor])
+    column = len(
+        "".join(itertools.takewhile(lambda i: i != "\n", reversed(value[:cursor])))
+    )
     return line + 1, column + 1
-
-
-def trunc_while_match(value: str, chars: str) -> str:
-    def gen():
-        for i in value:
-            if i not in chars:
-                break
-            yield i
-
-    return "".join(gen())
-
-
-def trunc_until_match(value: str, chars: str) -> str:
-    def gen():
-        for i in value:
-            if i in chars:
-                break
-            yield i
-
-    return "".join(gen())
-
-
-def escape_whitespace(query: str) -> str:
-    return query.replace("\n", "\\n").replace("\t", "\\t")
 
 
 @dataclasses.dataclass()
@@ -60,6 +41,7 @@ class Token(t.NamedTuple):
     pattern: t.Pattern
     verbose: t.Optional[t.Callable[[str], str]] = None
     serialize: t.Optional[t.Callable[[str], t.Any]] = None
+    is_syntax_error: bool = False
     skip: bool = False
 
 
@@ -83,8 +65,14 @@ class TokenType:
     STRING = Token(
         name="String",
         verbose=lambda v: f"{v}",
-        pattern=re.compile(r"^\"[^\"]*\""),
-        serialize=lambda v: v.strip('"'),
+        pattern=re.compile(r"^\"(\\.|[^\"\n\\])*\""),
+        serialize=literal_eval,
+    )
+    VARIABLE = Token(
+        name="Variable",
+        verbose=lambda v: f'"{v[1:]}"',
+        pattern=re.compile(r"^\$([a-zA-Z_])\w*"),
+        serialize=lambda v: ast.AstVariable(name=v[1:]),
     )
     EOF = Token(name="EOF", pattern=re.compile(r"^$"))
     QUERY = Token(name="query", pattern=re.compile(r"^query"))
@@ -93,10 +81,15 @@ class TokenType:
     OPEN_ARGS = Token(name="(", pattern=re.compile(r"^\("))
     CLOSE_ARGS = Token(name=")", pattern=re.compile(r"^\)"))
     COLON = Token(name=":", pattern=re.compile(r"^:"))
+    COMMA = Token(name=",", pattern=re.compile(r"^,"))
+    DOLLAR = Token(name="$", pattern=re.compile(r"^\$"))
     WHITESPACE = Token(name="whitespace", pattern=re.compile(r"^\s"), skip=True)
     COMMENT = Token(name="comment", pattern=re.compile(r"^#[^\n]*\n"), skip=True)
-
-    VALUE_TYPES = [FLOAT, INT, STRING]
+    UNTERMINATED_STRING = Token(
+        name="Unterminated string",
+        pattern=re.compile(r"^\"(\\.|[^\n\"\\])*"),
+        is_syntax_error=True,
+    )
 
     @classmethod
     def all(cls) -> t.Iterable[Token]:
@@ -108,11 +101,13 @@ def parse_next(
 ) -> t.Tuple[str, int, Token]:
     for token in itertools.chain(tokens or [], TokenType.all()):
         if re.match(token.pattern, value[cursor:]):
-            matched_token = next(re.finditer(token.pattern, value[cursor:])).group()
-            cursor += len(matched_token)
+            raw = next(re.finditer(token.pattern, value[cursor:])).group()
+            cursor += len(raw)
             if token.skip:
-                return parse_next(value, cursor)
-            return matched_token, cursor, token
+                return parse_next(value, cursor, tokens)
+            if token.is_syntax_error:
+                raise QueryParseError(token.name, value, cursor)
+            return raw, cursor, token
     raise QueryParseError(f'Unexpected character "{value[cursor]}"', value, cursor)
 
 
@@ -142,6 +137,7 @@ class QueryParser:
 
     def _parse_operation(self) -> ast.AstOperation:
         operation_name = None
+        variables = []
 
         parsed, token = self.next(expected=[TokenType.QUERY, TokenType.OPEN_BODY])
         if token is TokenType.QUERY:
@@ -149,14 +145,30 @@ class QueryParser:
             if token is TokenType.NAME:
                 operation_name = parsed
                 parsed, token = self.next(
-                    expected=[TokenType.NAME, TokenType.OPEN_BODY]
+                    expected=[TokenType.OPEN_ARGS, TokenType.OPEN_BODY]
                 )
+                if token is TokenType.OPEN_ARGS:
+                    variables = list(self._parse_operation_args())
+                    parsed, token = self.next(expected=[TokenType.OPEN_BODY])
 
         assert token is TokenType.OPEN_BODY
 
         return ast.AstOperation(
-            name=operation_name, selections=list(self._parse_selections())
+            name=operation_name,
+            selections=list(self._parse_selections()),
+            variables=variables,
         )
+
+    def _parse_operation_args(self) -> t.Iterator[ast.AstParameter]:
+        while True:
+            self.next(expected=[TokenType.DOLLAR])
+            name, token = self.next(expected=[TokenType.NAME])
+            self.next(expected=[TokenType.COLON])
+            value, token = self.next(expected=[TokenType.NAME])
+            yield ast.AstParameter(name=name, typename=value)
+            name, token = self.next(expected=[TokenType.COMMA, TokenType.CLOSE_ARGS])
+            if token is TokenType.CLOSE_ARGS:
+                break
 
     def _parse_selections(self) -> t.Iterator[ast.AstSelection]:
         name, token = self.next(expected=[TokenType.NAME])
@@ -186,14 +198,18 @@ class QueryParser:
                 break
 
     def _parse_arguments(self) -> t.Iterator[ast.AstArgument]:
-        name, token = self.next(expected=[TokenType.NAME])
-        yield self._parse_argument(name)
-        while token != TokenType.CLOSE_ARGS:
-            name, token = self.next(expected=[TokenType.NAME, TokenType.CLOSE_ARGS])
-            if token is TokenType.NAME:
-                yield self._parse_argument(name)
-
-    def _parse_argument(self, name: str) -> ast.AstArgument:
-        self.next(expected=[TokenType.COLON])
-        value, token = self.next(expected=TokenType.VALUE_TYPES)
-        return ast.AstArgument(name=name, value=token.serialize(value))
+        while True:
+            name, token = self.next(expected=[TokenType.NAME])
+            self.next(expected=[TokenType.COLON])
+            value, token = self.next(
+                expected=[
+                    TokenType.FLOAT,
+                    TokenType.INT,
+                    TokenType.STRING,
+                    TokenType.VARIABLE,
+                ]
+            )
+            yield ast.AstArgument(name=name, value=token.serialize(value))
+            name, token = self.next(expected=[TokenType.COMMA, TokenType.CLOSE_ARGS])
+            if token is TokenType.CLOSE_ARGS:
+                break

@@ -44,7 +44,7 @@ class GraphQLView(View):
 
         result, status_code = self.get_query_result(operation)
         if self.show_graphiql:
-            context = template.Context(
+            context = template.RequestContext(
                 {**self.get_context_data(), **{"result": result if operation else ""}}
             )
             return HttpResponse(

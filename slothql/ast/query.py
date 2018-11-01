@@ -5,8 +5,14 @@ import typing as t
 
 
 @dataclasses.dataclass()
+class AstParameter:
+    name: str
+    typename: str
+
+
+@dataclasses.dataclass()
 class AstVariable:
-    value: str
+    name: str
 
 
 AstValue = t.Union[str, float, int, bool, None, list, dict]
@@ -29,6 +35,7 @@ class AstSelection:
 class AstOperation:
     selections: t.List[AstSelection]
     name: t.Optional[str] = None
+    variables: t.List[AstParameter] = dataclasses.field(default_factory=list)
 
 
 @dataclasses.dataclass()

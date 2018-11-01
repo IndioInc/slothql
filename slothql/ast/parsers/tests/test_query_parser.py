@@ -6,6 +6,19 @@ from .. import query_parser
 
 
 @pytest.mark.parametrize(
+    "args, expected",
+    (
+        (("Foo", "foo", 0), "Syntax Error GraphQL (1:1) Foo"),
+        (("Foo", "foo", 1), "Syntax Error GraphQL (1:2) Foo"),
+        (("Foo", "\nfoo", 1), "Syntax Error GraphQL (2:1) Foo"),
+        (("Foo", "\nfoo", 2), "Syntax Error GraphQL (2:2) Foo"),
+    ),
+)
+def test_query_parse_error(args: tuple, expected: str):
+    assert expected == str(query_parser.QueryParseError(*args))
+
+
+@pytest.mark.parametrize(
     "value, cursor, expected",
     (
         ("", 0, ("", 0, query_parser.TokenType.EOF)),
@@ -42,6 +55,21 @@ def test_parse_next(value: str, cursor: int, expected):
             "{foo}",
             ast.AstQuery(
                 operations=[ast.AstOperation(selections=[ast.AstSelection(name="foo")])]
+            ),
+        ),
+        (
+            '{foo(a: "\\"")}',
+            ast.AstQuery(
+                operations=[
+                    ast.AstOperation(
+                        selections=[
+                            ast.AstSelection(
+                                name="foo",
+                                arguments=[ast.AstArgument(name="a", value='"')],
+                            )
+                        ]
+                    )
+                ]
             ),
         ),
         (
@@ -95,6 +123,51 @@ def test_parse_next(value: str, cursor: int, expected):
                 ]
             ),
         ),
+        (
+            '{foo(a: 1, b: "2")}',
+            ast.AstQuery(
+                operations=[
+                    ast.AstOperation(
+                        selections=[
+                            ast.AstSelection(
+                                name="foo",
+                                arguments=[
+                                    ast.AstArgument(name="a", value=1),
+                                    ast.AstArgument(name="b", value="2"),
+                                ],
+                            )
+                        ]
+                    )
+                ]
+            ),
+        ),
+        (
+            "query foo($a: Integer, $b: String) {foo(a: $a, b: $b)}",
+            ast.AstQuery(
+                operations=[
+                    ast.AstOperation(
+                        name="foo",
+                        variables=[
+                            ast.AstParameter(name="a", typename="Integer"),
+                            ast.AstParameter(name="b", typename="String"),
+                        ],
+                        selections=[
+                            ast.AstSelection(
+                                name="foo",
+                                arguments=[
+                                    ast.AstArgument(
+                                        name="a", value=ast.AstVariable(name="a")
+                                    ),
+                                    ast.AstArgument(
+                                        name="b", value=ast.AstVariable(name="b")
+                                    ),
+                                ],
+                            )
+                        ],
+                    )
+                ]
+            ),
+        ),
     ),
 )
 def test_parse_query__valid(query, expected):
@@ -118,6 +191,14 @@ def test_parse_query__valid(query, expected):
         ("{foo()}}", "Syntax Error GraphQL (1:6) Expected Name, found )"),
         ("{foo(bar)}}", "Syntax Error GraphQL (1:9) Expected :, found )"),
         ("{foo(bar:)}}", "Syntax Error GraphQL (1:10) Unexpected )"),
+        ("{foo(bar: 1 baz: 2)}}", 'Syntax Error GraphQL (1:12) Unexpected Name "baz"'),
+        ("{foo(bar: 1,)}}", "Syntax Error GraphQL (1:13) Expected Name, found )"),
+        ("query", "Syntax Error GraphQL (1:6) Unexpected EOF"),
+        ("query foo", "Syntax Error GraphQL (1:10) Unexpected EOF"),
+        ("query foo()", "Syntax Error GraphQL (1:11) Expected $, found )"),
+        ("query foo($)", "Syntax Error GraphQL (1:12) Expected Name, found )"),
+        ("query foo($a)", "Syntax Error GraphQL (1:13) Expected :, found )"),
+        ('{foo(a: "\\"\n")}', "Syntax Error GraphQL (1:12) Unterminated string"),
     ),
 )
 def test_parse_query__invalid(query, message):
