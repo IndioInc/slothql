@@ -46,7 +46,7 @@ class Token(t.NamedTuple):
 
 
 class TokenType:
-    NULL = Token(name="null", pattern=re.compile(r"^null"))
+    NULL = Token(name="null", pattern=re.compile(r"^null"), serialize=lambda _: None)
     NAME = Token(
         name="Name", verbose=lambda v: f'"{v}"', pattern=re.compile(r"^[a-zA-Z_]\w*")
     )
@@ -83,6 +83,7 @@ class TokenType:
     COLON = Token(name=":", pattern=re.compile(r"^:"))
     COMMA = Token(name=",", pattern=re.compile(r"^,"))
     DOLLAR = Token(name="$", pattern=re.compile(r"^\$"))
+    DIRECTIVE = Token(name="@", pattern=re.compile(r"^@"))
     WHITESPACE = Token(name="whitespace", pattern=re.compile(r"^\s"), skip=True)
     COMMENT = Token(name="comment", pattern=re.compile(r"^#[^\n]*\n"), skip=True)
     UNTERMINATED_STRING = Token(
@@ -118,18 +119,23 @@ class QueryParser:
         ), f"expected query to be of type str, not {repr(query)}"
         self.query = query
         self.cursor = 0
+        self.parsed: str = ""
+        self.token: t.Optional[Token] = None
 
-    def next(self, *, expected: t.List[Token]) -> t.Tuple[str, Token]:
-        parsed, new_cursor, token = parse_next(self.query, self.cursor, expected)
-        if token not in expected:
+    def next(self, *, expected: t.List[Token]) -> None:
+        self.parsed, new_cursor, self.token = parse_next(
+            self.query, self.cursor, expected
+        )
+        if self.token not in expected:
             if len(expected) == 1:
-                message = f"Expected {expected[0].name}, found {token.name}"
+                message = f"Expected {expected[0].name}, found {self.token.name}"
             else:
-                message = f"Unexpected {token.name}"
-            verbose = f" {token.verbose(parsed)}" if token.verbose else ""
+                message = f"Unexpected {self.token.name}"
+            verbose = (
+                f" {self.token.verbose(self.parsed)}" if self.token.verbose else ""
+            )
             raise QueryParseError(message + verbose, self.query, self.cursor)
         self.cursor = new_cursor
-        return parsed, token
 
     def parse(self) -> ast.AstQuery:
         operation = self._parse_operation()
@@ -139,19 +145,17 @@ class QueryParser:
         operation_name = None
         variables = []
 
-        parsed, token = self.next(expected=[TokenType.QUERY, TokenType.OPEN_BODY])
-        if token is TokenType.QUERY:
-            parsed, token = self.next(expected=[TokenType.NAME, TokenType.OPEN_BODY])
-            if token is TokenType.NAME:
-                operation_name = parsed
-                parsed, token = self.next(
-                    expected=[TokenType.OPEN_ARGS, TokenType.OPEN_BODY]
-                )
-                if token is TokenType.OPEN_ARGS:
+        self.next(expected=[TokenType.QUERY, TokenType.OPEN_BODY])
+        if self.token is TokenType.QUERY:
+            self.next(expected=[TokenType.NAME, TokenType.OPEN_BODY])
+            if self.token is TokenType.NAME:
+                operation_name = self.parsed
+                self.next(expected=[TokenType.OPEN_ARGS, TokenType.OPEN_BODY])
+                if self.token is TokenType.OPEN_ARGS:
                     variables = list(self._parse_operation_args())
-                    parsed, token = self.next(expected=[TokenType.OPEN_BODY])
+                    self.next(expected=[TokenType.OPEN_BODY])
 
-        assert token is TokenType.OPEN_BODY
+        assert self.token is TokenType.OPEN_BODY
 
         return ast.AstOperation(
             name=operation_name,
@@ -162,54 +166,103 @@ class QueryParser:
     def _parse_operation_args(self) -> t.Iterator[ast.AstParameter]:
         while True:
             self.next(expected=[TokenType.DOLLAR])
-            name, token = self.next(expected=[TokenType.NAME])
+            self.next(expected=[TokenType.NAME])
+            name = self.parsed
             self.next(expected=[TokenType.COLON])
-            value, token = self.next(expected=[TokenType.NAME])
-            yield ast.AstParameter(name=name, typename=value)
-            name, token = self.next(expected=[TokenType.COMMA, TokenType.CLOSE_ARGS])
-            if token is TokenType.CLOSE_ARGS:
+            self.next(expected=[TokenType.NAME])
+            yield ast.AstParameter(name=name, typename=self.parsed)
+            self.next(expected=[TokenType.COMMA, TokenType.CLOSE_ARGS])
+            if self.token is TokenType.CLOSE_ARGS:
                 break
 
     def _parse_selections(self) -> t.Iterator[ast.AstSelection]:
-        name, token = self.next(expected=[TokenType.NAME])
-        selection = ast.AstSelection(name=name)
+        selection = None
+        self.next(expected=[TokenType.NAME])
         while True:
-            name, token = self.next(
+            if self.token is TokenType.DIRECTIVE:
+                selection = dataclasses.replace(
+                    selection, directives=list(self._parse_directives())
+                )
+            if self.token is TokenType.NAME:
+                if selection:
+                    yield selection
+                selection = ast.AstSelection(name=self.parsed)
+            elif self.token is TokenType.OPEN_ARGS:
+                selection = dataclasses.replace(
+                    selection, arguments=list(self._parse_arguments())
+                )
+            elif self.token is TokenType.OPEN_BODY:
+                selection = dataclasses.replace(
+                    selection, selections=list(self._parse_selections())
+                )
+            elif self.token is TokenType.CLOSE_BODY:
+                yield selection
+                break
+            else:
+                raise AssertionError(f"Unhandled token: {repr(self.token)}")
+
+            self.next(
                 expected=[
                     TokenType.NAME,
+                    TokenType.DIRECTIVE,
                     TokenType.OPEN_BODY,
                     TokenType.CLOSE_BODY,
                     TokenType.OPEN_ARGS,
                 ]
             )
-            if token is TokenType.NAME:
-                yield selection
-                selection = ast.AstSelection(name=name)
-            elif token is TokenType.OPEN_ARGS:
-                selection = dataclasses.replace(
-                    selection, arguments=list(self._parse_arguments())
-                )
-            elif token is TokenType.OPEN_BODY:
-                selection = dataclasses.replace(
-                    selection, selections=list(self._parse_selections())
-                )
-            elif token is TokenType.CLOSE_BODY:
-                yield selection
-                break
 
     def _parse_arguments(self) -> t.Iterator[ast.AstArgument]:
         while True:
-            name, token = self.next(expected=[TokenType.NAME])
+            self.next(expected=[TokenType.NAME])
+            name = self.parsed
             self.next(expected=[TokenType.COLON])
-            value, token = self.next(
+            self.next(
                 expected=[
                     TokenType.FLOAT,
                     TokenType.INT,
                     TokenType.STRING,
                     TokenType.VARIABLE,
+                    TokenType.NULL,
                 ]
             )
-            yield ast.AstArgument(name=name, value=token.serialize(value))
-            name, token = self.next(expected=[TokenType.COMMA, TokenType.CLOSE_ARGS])
-            if token is TokenType.CLOSE_ARGS:
+            yield ast.AstArgument(name=name, value=self.token.serialize(self.parsed))
+            self.next(expected=[TokenType.COMMA, TokenType.CLOSE_ARGS])
+            if self.token is TokenType.CLOSE_ARGS:
                 break
+
+    def _parse_directives(self) -> t.Iterable[ast.AstDirective]:
+        self.next(expected=[TokenType.NAME])
+        directive = ast.AstDirective(name=self.parsed)
+        while True:
+            self.next(
+                expected=[
+                    TokenType.DIRECTIVE,
+                    TokenType.OPEN_ARGS,
+                    TokenType.NAME,
+                    TokenType.OPEN_BODY,
+                    TokenType.CLOSE_BODY,
+                ]
+            )
+            if self.token is TokenType.OPEN_ARGS:
+                directive = dataclasses.replace(
+                    directive, arguments=list(self._parse_arguments())
+                )
+                self.next(
+                    expected=[
+                        TokenType.DIRECTIVE,
+                        TokenType.NAME,
+                        TokenType.OPEN_BODY,
+                        TokenType.CLOSE_BODY,
+                    ]
+                )
+            if self.token in (
+                TokenType.OPEN_BODY,
+                TokenType.CLOSE_BODY,
+                TokenType.NAME,
+            ):
+                yield directive
+                break
+            if self.token is TokenType.DIRECTIVE:
+                yield directive
+                self.next(expected=[TokenType.NAME])
+                directive = ast.AstDirective(name=self.parsed)

@@ -6,6 +6,7 @@ from .query import (
     AstValue,
     AstVariable,
     AstParameter,
+    AstDirective,
 )
 
 __all__ = (
@@ -16,4 +17,5 @@ __all__ = (
     "AstValue",
     "AstVariable",
     "AstParameter",
+    "AstDirective",
 )

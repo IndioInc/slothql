@@ -25,10 +25,17 @@ class AstArgument:
 
 
 @dataclasses.dataclass()
+class AstDirective:
+    name: str
+    arguments: t.Optional[t.List[AstArgument]] = None
+
+
+@dataclasses.dataclass()
 class AstSelection:
     name: str
     arguments: t.Optional[t.List[AstArgument]] = None
     selections: t.Optional[t.List["AstSelection"]] = None
+    directives: t.Optional[t.List[AstDirective]] = None
 
 
 @dataclasses.dataclass()

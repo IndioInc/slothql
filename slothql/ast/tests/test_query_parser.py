@@ -2,7 +2,7 @@ import pytest
 
 from slothql import ast
 
-from .. import query_parser
+from slothql.ast import query_parser
 
 
 @pytest.mark.parametrize(
@@ -76,6 +76,65 @@ def test_parse_next(value: str, cursor: int, expected):
             "query {foo}",
             ast.AstQuery(
                 operations=[ast.AstOperation(selections=[ast.AstSelection(name="foo")])]
+            ),
+        ),
+        (
+            "query {foo@bar}",
+            ast.AstQuery(
+                operations=[
+                    ast.AstOperation(
+                        selections=[
+                            ast.AstSelection(
+                                name="foo", directives=[ast.AstDirective(name="bar")]
+                            )
+                        ]
+                    )
+                ]
+            ),
+        ),
+        (
+            "query {foo@bar@baz}",
+            ast.AstQuery(
+                operations=[
+                    ast.AstOperation(
+                        selections=[
+                            ast.AstSelection(
+                                name="foo",
+                                directives=[
+                                    ast.AstDirective(name="bar"),
+                                    ast.AstDirective(name="baz"),
+                                ],
+                            )
+                        ]
+                    )
+                ]
+            ),
+        ),
+        (
+            'query {foo@bar(a: 1)@baz(b: "2", c: null)}',
+            ast.AstQuery(
+                operations=[
+                    ast.AstOperation(
+                        selections=[
+                            ast.AstSelection(
+                                name="foo",
+                                directives=[
+                                    ast.AstDirective(
+                                        name="bar",
+                                        arguments=[ast.AstArgument(name="a", value=1)],
+                                    ),
+                                    ast.AstDirective(
+                                        name="baz",
+                                        arguments=[
+                                            ast.AstArgument(name="b", value="2"),
+                                            ast.AstArgument(name="c", value=None),
+                                        ],
+                                    ),
+                                ],
+                            )
+                        ]
+                    )
+                ]
             ),
         ),
         (
@@ -199,6 +258,11 @@ def test_parse_query__valid(query, expected):
         ("query foo($)", "Syntax Error GraphQL (1:12) Expected Name, found )"),
         ("query foo($a)", "Syntax Error GraphQL (1:13) Expected :, found )"),
         ('{foo(a: "\\"\n")}', "Syntax Error GraphQL (1:12) Unterminated string"),
+        ("{version@}", "Syntax Error GraphQL (1:10) Expected Name, found }"),
+        ("{version@foo()}", "Syntax Error GraphQL (1:14) Expected Name, found )"),
+        ("{@foo}", "Syntax Error GraphQL (1:2) Expected Name, found @"),
+        ("{version@foo(a: 1)()}", "Syntax Error GraphQL (1:19) Unexpected ("),
+        ("{version@@foo}", "Syntax Error GraphQL (1:10) Expected Name, found @"),
     ),
 )
 def test_parse_query__invalid(query, message):
