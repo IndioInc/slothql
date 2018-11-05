@@ -6,6 +6,7 @@ import pytest
 from django.db import models
 
 import slothql
+from slothql.django.tests.helpers import mock_queryset
 
 
 class TestNestedFilters:
@@ -54,8 +55,8 @@ class TestNestedFilters:
         nested_filter_class = filter_class._meta.fields.get("foo").of_type
         assert nested_filter_class is self.Foo.filter_class
 
-    def test_select_related(self, queryset_factory):
-        queryset = queryset_factory(model=self.BarModel)
+    def test_select_related(self):
+        queryset = mock_queryset(self.BarModel)
         with mock.patch.object(
             self.BarModel._default_manager, "get_queryset", return_value=queryset
         ):
@@ -67,8 +68,8 @@ class TestNestedFilters:
         "filter_object, filter_kwargs",
         (("{id: 1}", {"id": 1}), ("{foo: {id: 1}}", {"foo__id": 1})),
     )
-    def test_filter(self, filter_object, filter_kwargs, queryset_factory):
-        queryset = queryset_factory(model=self.BarModel)
+    def test_filter(self, filter_object, filter_kwargs):
+        queryset = mock_queryset(self.BarModel)
         with mock.patch.object(
             self.BarModel._default_manager, "get_queryset", return_value=queryset
         ):
@@ -79,8 +80,8 @@ class TestNestedFilters:
 
         queryset.filter.assert_called_once_with(**filter_kwargs)
 
-    def test_prefetch_related(self, queryset_factory):
-        queryset = queryset_factory(model=self.FooModel)
+    def test_prefetch_related(self):
+        queryset = mock_queryset(self.FooModel)
         with mock.patch.object(
             self.FooModel._default_manager, "get_queryset", return_value=queryset
         ):
@@ -92,9 +93,9 @@ class TestNestedFilters:
             )
         )
 
-    def test_prefetch_related_with_filter(self, queryset_factory):
-        foo_queryset = queryset_factory(model=self.FooModel)
-        bar_queryset = queryset_factory(model=self.BarModel)
+    def test_prefetch_related_with_filter(self):
+        foo_queryset = mock_queryset(self.FooModel)
+        bar_queryset = mock_queryset(self.BarModel)
         with mock.patch.object(
             self.FooModel._default_manager, "get_queryset", return_value=foo_queryset
         ):
@@ -111,9 +112,9 @@ class TestNestedFilters:
         )
         bar_queryset.filter.assert_called_once_with(id=1)
 
-    def test_prefetch_not_overwritten(self, queryset_factory):
-        foo_queryset = queryset_factory(model=self.FooModel)
-        bar_queryset = queryset_factory(model=self.BarModel)
+    def test_prefetch_not_overwritten(self):
+        foo_queryset = mock_queryset(self.FooModel)
+        bar_queryset = mock_queryset(self.BarModel)
         with mock.patch.object(
             self.FooModel._default_manager, "get_queryset", return_value=foo_queryset
         ):
